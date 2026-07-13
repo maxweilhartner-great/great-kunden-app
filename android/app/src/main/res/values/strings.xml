@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GR·EAT</string>
+    <string name="title_activity_main">GR·EAT</string>
+    <string name="package_name">at.greatbetriebsverpflegung.kundenapp</string>
+    <string name="custom_url_scheme">at.greatbetriebsverpflegung.kundenapp</string>
+</resources>

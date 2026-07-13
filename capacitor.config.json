@@ -1,0 +1,12 @@
+{
+  "appId": "at.greatbetriebsverpflegung.kundenapp",
+  "appName": "GR·EAT",
+  "webDir": "www",
+  "backgroundColor": "#1f3d2e",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#1f3d2e"
+  }
+}

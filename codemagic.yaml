@@ -1,0 +1,85 @@
+workflows:
+  android-release:
+    name: GR·EAT Kunden-App – Android (Play Store)
+    max_build_duration: 30
+    instance_type: linux
+    environment:
+      node: 20
+      vars:
+        PACKAGE_NAME: "at.greatbetriebsverpflegung.kundenapp"
+      groups:
+        - google_play   # in Codemagic UI anlegen: enthält GCLOUD_SERVICE_ACCOUNT_CREDENTIALS für Play-Upload
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          npm install
+      - name: Capacitor sync
+        script: |
+          npx cap sync android
+      - name: Build Android App Bundle (release)
+        script: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/**/*.aab
+      - android/app/build/outputs/**/*.apk
+    publishing:
+      email:
+        recipients:
+          - max.weilhartner@weilhartner-snack.at
+        notify:
+          success: true
+          failure: true
+      # Play-Store-Upload optional aktivieren, sobald Service-Account + App im Play-Console-Eintrag existieren:
+      # google_play:
+      #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal
+
+  ios-release:
+    name: GR·EAT Kunden-App – iOS (App Store)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 20
+      xcode: latest
+      cocoapods: default
+      groups:
+        - app_store_connect   # in Codemagic UI anlegen: API-Key von App Store Connect + Zertifikate
+      vars:
+        BUNDLE_ID: "at.greatbetriebsverpflegung.kundenapp"
+        XCODE_WORKSPACE: "App.xcworkspace"
+        XCODE_SCHEME: "App"
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          npm install
+      - name: Add iOS platform (einmalig, falls noch nicht im Repo enthalten)
+        script: |
+          test -d ios || npx cap add ios
+          npx cap sync ios
+      - name: Install CocoaPods
+        script: |
+          cd ios/App && pod install
+      - name: Set up code signing (automatisch via Codemagic)
+        script: |
+          xcode-project use-profiles
+      - name: Build .ipa
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/App/$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - max.weilhartner@weilhartner-snack.at
+        notify:
+          success: true
+          failure: true
+      # App Store Connect Upload optional aktivieren, sobald Bundle-ID + Zertifikate hinterlegt sind:
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true

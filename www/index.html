@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GR·EAT — Kunden-App Prototyp v2</title>
+<style>
+  :root{
+    --forest:#1f3d2e;
+    --forest-deep:#12261b;
+    --paper:#f6f3ea;
+    --card:#ffffff;
+    --mango:#e98a2e;
+    --mango-deep:#c96f1a;
+    --line:#e4e0d3;
+    --ink:#1a1a1a;
+    --ink-soft:#5c6862;
+    --ok:#3f7a4e;
+    --low:#c9631a;
+    --out:#b23b3b;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:#d9d4c2; height:100%;}
+  body{
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display:flex; justify-content:center; align-items:flex-start;
+    padding:24px 0; min-height:100vh;
+  }
+  .display{ font-family:'Georgia', serif; font-weight:600; letter-spacing:-0.01em; }
+
+  .phone{
+    width:390px; max-width:100vw; height:844px; max-height:100vh;
+    background:var(--paper); border-radius:44px; overflow:hidden; position:relative;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.45), 0 0 0 10px #0d0d0d;
+    display:flex; flex-direction:column;
+  }
+  .statusbar{height:16px; flex-shrink:0;}
+
+  /* ---------- HEADER ---------- */
+  .app-header{
+    background:var(--forest); color:var(--paper); padding:6px 22px 18px; flex-shrink:0;
+    position:relative; overflow:hidden;
+  }
+  .app-header::after{
+    content:""; position:absolute; right:-40px; top:-40px; width:160px; height:160px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, rgba(233,138,46,0.35), transparent 70%);
+  }
+  .brand-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .wordmark{font-size:15px; letter-spacing:0.14em; font-weight:700; color:var(--mango);}
+  .wordmark b{color:var(--paper);}
+  .scan-btn{
+    display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.18); color:var(--paper); font-size:11.5px; font-weight:600;
+    padding:8px 12px; border-radius:999px; cursor:pointer;
+  }
+  .greeting{font-size:24px; line-height:1.15; margin:0 0 4px;}
+  .greeting-sub{font-size:13px; color:#c7d2c9; margin:0 0 14px;}
+
+  /* Bereich-Switch */
+  .bereich-switch{
+    display:flex; background:rgba(255,255,255,0.09); border:1px solid rgba(255,255,255,0.16);
+    border-radius:12px; padding:4px; gap:4px;
+  }
+  .bereich-opt{
+    flex:1; text-align:center; padding:9px 8px; border-radius:9px; font-size:12.5px; font-weight:600;
+    color:#c7d2c9; cursor:pointer;
+  }
+  .bereich-opt.active{background:var(--mango); color:#2a1a06;}
+
+  /* ---------- CONTEXT CHIP ---------- */
+  .context-bar{padding:14px 20px 4px; flex-shrink:0;}
+  .company-chip{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:11px 14px;
+  }
+  .company-chip .left{display:flex; align-items:center; gap:10px;}
+  .company-chip .dot{width:9px; height:9px; border-radius:50%; background:var(--ok); flex-shrink:0;}
+  .company-chip .name{font-size:13px; font-weight:700; color:var(--ink);}
+  .company-chip .sub{font-size:11px; color:var(--ink-soft);}
+  .geofence-badge{font-size:10px; font-weight:700; color:var(--ok); background:#e7f3ea; padding:4px 9px; border-radius:999px; white-space:nowrap;}
+
+  .public-note{
+    font-size:11.5px; color:var(--ink-soft); background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:11px 14px; display:flex; align-items:center; gap:8px;
+  }
+
+  /* ---------- SCROLL CONTENT ---------- */
+  .content{flex:1; overflow-y:auto; padding-bottom:12px; -webkit-overflow-scrolling:touch;}
+  .content::-webkit-scrollbar{display:none;}
+
+  .section-title{display:flex; align-items:baseline; justify-content:space-between; padding:16px 20px 10px;}
+  .section-title h2{font-family:'Georgia', serif; font-size:17px; margin:0; font-weight:600; color:var(--ink);}
+  .section-title span{font-size:12px; color:var(--ink-soft);}
+
+  /* ---------- MACHINE CARD ---------- */
+  .machine-list{padding:0 20px; display:flex; flex-direction:column; gap:12px;}
+  .machine-card{
+    background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px;
+    display:flex; gap:13px; align-items:center; cursor:pointer; transition:transform .15s ease;
+  }
+  .machine-card:active{transform:scale(0.98);}
+  .coil{width:52px; height:52px; flex-shrink:0; position:relative;}
+  .coil svg{width:100%; height:100%; display:block;}
+  .coil-icon{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:19px;}
+  .m-info{flex:1; min-width:0;}
+  .m-title{font-size:14.5px; font-weight:700; color:var(--ink); margin:0 0 2px;}
+  .m-loc{font-size:12px; color:var(--ink-soft); margin:0 0 6px;}
+  .m-tags{display:flex; gap:6px; flex-wrap:wrap;}
+  .tag{font-size:10.5px; padding:2.5px 8px; border-radius:999px; font-weight:600; background:#eef1ec; color:var(--forest);}
+  .tag.status-ok{background:#e7f3ea; color:var(--ok);}
+  .tag.status-low{background:#fdf0e3; color:var(--low);}
+  .chevron{color:#c7c2b3; flex-shrink:0;}
+
+  /* ---------- PUBLIC LOCATION GROUP CARD ---------- */
+  .loc-group{
+    background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; margin:0 20px 12px;
+  }
+  .loc-group-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;}
+  .loc-group-head .lt{display:flex; align-items:center; gap:10px;}
+  .loc-pin{width:38px; height:38px; border-radius:12px; background:#eef1ec; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0;}
+  .loc-name{font-size:14px; font-weight:700; color:var(--ink); margin:0;}
+  .loc-addr{font-size:11.5px; color:var(--ink-soft); margin:0;}
+  .loc-count{font-size:11px; color:var(--ink-soft); font-weight:600;}
+
+  /* ---------- CATEGORY PILLS ---------- */
+  .pills{display:flex; gap:8px; padding:0 20px 4px; overflow-x:auto;}
+  .pills::-webkit-scrollbar{display:none;}
+  .pill{flex-shrink:0; padding:7px 14px; border-radius:999px; font-size:12.5px; font-weight:600; background:var(--card); border:1px solid var(--line); color:var(--ink-soft); white-space:nowrap; cursor:pointer;}
+  .pill.active{background:var(--forest); color:var(--paper); border-color:var(--forest);}
+
+  /* ---------- BOTTOM NAV ---------- */
+  .bottom-nav{flex-shrink:0; background:var(--card); border-top:1px solid var(--line); display:flex; padding:10px 8px 22px;}
+  .nav-item{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px; color:#a7a396; cursor:pointer; padding:4px 0;}
+  .nav-item.active{color:var(--forest);}
+  .nav-item.active svg{stroke:var(--forest);}
+  .nav-item svg{stroke:#a7a396;}
+  .nav-badge{position:relative;}
+  .lock-dot{position:absolute; top:-2px; right:-6px; width:14px; height:14px; border-radius:50%; background:var(--mango); color:#fff; font-size:9px; display:flex; align-items:center; justify-content:center;}
+
+  .page{display:none;}
+  .page.active{display:block;}
+
+  .detail-back{display:flex; align-items:center; gap:8px; padding:16px 20px 4px; color:var(--ink-soft); font-size:13px; cursor:pointer;}
+  .detail-hero{margin:10px 20px 0; background:var(--forest); border-radius:20px; padding:20px; color:var(--paper); position:relative; overflow:hidden;}
+  .detail-hero::after{content:""; position:absolute; right:-30px; bottom:-30px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle, rgba(233,138,46,0.3), transparent 70%);}
+  .detail-hero h3{font-family:'Georgia',serif; font-size:20px; margin:0 0 4px;}
+  .detail-hero p{font-size:12.5px; color:#c7d2c9; margin:0;}
+  .prod-grid{padding:16px 20px 8px; display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .prod-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px;}
+  .prod-name{font-size:12.5px; font-weight:700; color:var(--ink); margin:0 0 3px;}
+  .prod-fach{font-size:10.5px; color:var(--ink-soft); margin:0 0 8px;}
+  .prod-price{font-size:14px; font-weight:700; color:var(--forest);}
+  .prod-avail{font-size:10px; margin-top:6px; font-weight:600;}
+
+  .teaser{margin:20px; padding:26px 20px; text-align:center; border-radius:20px; background:linear-gradient(160deg, var(--forest), var(--forest-deep)); color:var(--paper);}
+  .teaser .icon{font-size:30px; margin-bottom:10px;}
+  .teaser h3{font-family:'Georgia',serif; font-size:19px; margin:0 0 8px;}
+  .teaser p{font-size:13px; color:#c7d2c9; line-height:1.5; margin:0 0 16px;}
+  .teaser .soon{display:inline-block; font-size:11px; font-weight:700; letter-spacing:0.06em; background:rgba(233,138,46,0.18); color:var(--mango); padding:6px 14px; border-radius:999px;}
+
+  /* ---------- WEEKLY PROMO (rotierendes Sandwich der Woche) ---------- */
+  .promo-card{
+    margin:14px 20px 4px; border-radius:20px; padding:16px 16px 16px 14px; position:relative; overflow:hidden;
+    background:linear-gradient(135deg, var(--forest), var(--forest-deep)); color:var(--paper);
+    display:flex; align-items:center; gap:14px; cursor:pointer;
+  }
+  .promo-card::after{content:""; position:absolute; right:-26px; top:-26px; width:110px; height:110px; border-radius:50%; background:radial-gradient(circle, rgba(233,138,46,0.32), transparent 70%);}
+  .promo-emoji{width:54px; height:54px; border-radius:15px; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0;}
+  .promo-eyebrow{font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--mango); margin:0 0 3px;}
+  .promo-title{font-family:'Georgia',serif; font-size:15.5px; margin:0 0 2px; position:relative;}
+  .promo-sub{font-size:11.5px; color:#c7d2c9; margin:0; position:relative;}
+  .promo-chevron{color:rgba(246,243,234,0.55); flex-shrink:0; position:relative;}
+
+  /* ---------- INFOS / NEWS PAGE ---------- */
+  .news-hero{margin:10px 20px 4px; background:linear-gradient(135deg, var(--forest), var(--forest-deep)); border-radius:20px; padding:22px 20px; color:var(--paper); position:relative; overflow:hidden;}
+  .news-hero::after{content:""; position:absolute; right:-30px; bottom:-30px; width:130px; height:130px; border-radius:50%; background:radial-gradient(circle, rgba(233,138,46,0.32), transparent 70%);}
+  .news-hero-eyebrow{font-size:10.5px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--mango); margin:0 0 6px; position:relative;}
+  .news-hero h3{font-family:'Georgia',serif; font-size:21px; margin:0 0 6px; position:relative;}
+  .news-hero p{font-size:13px; color:#c7d2c9; margin:0; line-height:1.5; position:relative;}
+  .news-list{padding:14px 20px 8px; display:flex; flex-direction:column; gap:10px;}
+  .news-item{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:13px 14px; display:flex; gap:12px; align-items:flex-start;}
+  .news-icon{width:36px; height:36px; border-radius:11px; background:#eef1ec; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;}
+  .news-title{font-size:13px; font-weight:700; color:var(--ink); margin:0 0 3px;}
+  .news-date{font-size:10.5px; color:var(--ink-soft); font-weight:600; margin:0 0 4px;}
+  .news-text{font-size:12px; color:var(--ink-soft); line-height:1.5; margin:0;}
+
+  /* ---------- QR SCAN OVERLAY ---------- */
+  .qr-overlay{
+    position:absolute; inset:0; background:rgba(18,38,27,0.92); z-index:50;
+    display:none; flex-direction:column; align-items:center; justify-content:center; color:var(--paper); padding:0 30px; text-align:center;
+  }
+  .qr-overlay.active{display:flex;}
+  .qr-frame{
+    width:200px; height:200px; border:2px solid var(--mango); border-radius:20px; position:relative; margin-bottom:22px;
+  }
+  .qr-frame::before, .qr-frame::after{content:""; position:absolute; width:26px; height:26px; border-color:var(--mango);}
+  .scan-line{
+    position:absolute; left:6px; right:6px; height:2px; background:var(--mango); top:10%;
+    animation:scan 1.8s ease-in-out infinite;
+    box-shadow:0 0 8px var(--mango);
+  }
+  @keyframes scan{ 0%,100%{top:8%;} 50%{top:88%;} }
+  .qr-overlay h3{font-family:'Georgia',serif; font-size:18px; margin:0 0 6px;}
+  .qr-overlay p{font-size:12.5px; color:#c7d2c9; margin:0 0 20px; line-height:1.5;}
+  .qr-close{font-size:12px; color:#c7d2c9; text-decoration:underline; cursor:pointer;}
+  .qr-result-btn{
+    background:var(--mango); color:#2a1a06; font-weight:700; font-size:13px; border:none; border-radius:12px; padding:12px 22px; cursor:pointer; margin-bottom:14px;
+  }
+
+  /* ---------- MELDEN: Feedback & Störung ---------- */
+  .fab-melden{
+    position:absolute; right:16px; bottom:88px; z-index:40;
+    width:52px; height:52px; border-radius:50%; background:var(--forest); color:var(--paper);
+    display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer;
+    box-shadow:0 6px 16px rgba(18,38,27,0.35);
+  }
+  .melden-overlay{
+    position:absolute; inset:0; background:rgba(18,38,27,0.55); z-index:60;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .melden-overlay.active{display:flex;}
+  .melden-sheet{
+    background:var(--paper); width:100%; border-radius:22px 22px 0 0; padding:20px 20px 28px; box-sizing:border-box;
+    max-height:82%; overflow-y:auto;
+  }
+  .melden-sheet h3{font-family:'Georgia',serif; font-size:18px; margin:0 0 4px;}
+  .melden-sheet .sub{font-size:12px; color:var(--ink-soft); margin:0 0 16px;}
+  .melden-tabs{display:flex; gap:8px; margin-bottom:16px;}
+  .melden-tab{flex:1; text-align:center; padding:9px 0; border-radius:12px; font-size:12.5px; font-weight:700; cursor:pointer; background:#f1efe7; color:var(--ink-soft);}
+  .melden-tab.active{background:var(--forest); color:var(--paper);}
+  .melden-field{margin-bottom:14px;}
+  .melden-field label{display:block; font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; text-transform:uppercase; letter-spacing:.03em;}
+  .melden-problem-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .melden-problem-chip{padding:10px 8px; border-radius:12px; border:1.5px solid var(--line); font-size:12.5px; text-align:center; cursor:pointer;}
+  .melden-problem-chip.active{border-color:var(--forest); background:rgba(63,122,78,0.1); font-weight:700;}
+  .melden-textarea{width:100%; min-height:70px; border:1.5px solid var(--line); border-radius:12px; padding:10px; font-size:13px; font-family:inherit; box-sizing:border-box; resize:vertical;}
+  .melden-stars{display:flex; gap:6px; font-size:30px;}
+  .melden-stars span{cursor:pointer; color:#e0dccf;}
+  .melden-stars span.filled{color:var(--mango);}
+  .melden-submit{width:100%; background:var(--forest); color:var(--paper); font-weight:700; font-size:14px; border:none; border-radius:14px; padding:14px; cursor:pointer;}
+  .melden-close{text-align:center; font-size:12px; color:var(--ink-soft); margin-top:12px; cursor:pointer;}
+  .melden-success{text-align:center; padding:20px 0;}
+  .melden-success .ico{font-size:40px; margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="statusbar"></div>
+
+  <!-- MELDEN OVERLAY (Feedback / Störung) -->
+  <div class="melden-overlay" id="melden-overlay">
+    <div class="melden-sheet" id="melden-sheet"></div>
+  </div>
+
+  <!-- Schwebender Melden-Button, auf allen Hauptseiten sichtbar -->
+  <div class="fab-melden" onclick="openMelden('stoerung')">💬</div>
+
+  <!-- QR SCAN OVERLAY -->
+  <div class="qr-overlay" id="qr-overlay">
+    <div class="qr-frame"><div class="scan-line"></div></div>
+    <h3 class="display" id="qr-title">Automat wird erkannt …</h3>
+    <p id="qr-sub">QR-Code am Automaten anvisieren.</p>
+    <button class="qr-result-btn" style="display:none;" id="qr-go" onclick="qrGoToMachine()">Zu „Frische &amp; Snacks“</button>
+    <div class="qr-close" onclick="closeQr()">Abbrechen</div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="app-header">
+    <div class="brand-row">
+      <div class="wordmark">GR<b>·</b>EAT</div>
+      <div class="scan-btn" onclick="openQr()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M17 20h4"/></svg>
+        Scannen
+      </div>
+    </div>
+    <p class="greeting display">Guten Tag 👋</p>
+    <p class="greeting-sub">Was gibt's heute an deinem Standort?</p>
+
+    <div class="bereich-switch">
+      <div class="bereich-opt active" id="opt-firma" onclick="setBereich('firma')">Mein Standort</div>
+      <div class="bereich-opt" id="opt-public" onclick="setBereich('public')">Öffentliche Automaten</div>
+    </div>
+  </div>
+
+  <!-- CONTEXT BAR -->
+  <div class="context-bar" id="context-firma">
+    <div class="company-chip">
+      <div class="left">
+        <span class="dot"></span>
+        <div>
+          <p class="name" style="margin:0;">Musterfirma GmbH</p>
+          <p class="sub" style="margin:0;">Werk 2, Halle B</p>
+        </div>
+      </div>
+      <span class="geofence-badge">📍 automatisch erkannt</span>
+    </div>
+  </div>
+  <div class="context-bar" id="context-public" style="display:none;">
+    <div class="public-note">🌍 Offen für alle — kein Login, keine Firmenzugehörigkeit nötig.</div>
+  </div>
+
+  <div class="content">
+
+    <!-- PAGE: FIRMA — Standorte -->
+    <div class="page active" id="page-firma">
+      <div class="promo-card" onclick="showNewsDetail()">
+        <div class="promo-emoji">🥪</div>
+        <div style="flex:1; min-width:0;">
+          <p class="promo-eyebrow">Diese Woche neu</p>
+          <p class="promo-title">Pulled-Pork-Wrap mit Coleslaw</p>
+          <p class="promo-sub">Ab Montag frisch in „Frische &amp; Snacks“</p>
+        </div>
+        <span class="promo-chevron">›</span>
+      </div>
+
+      <div class="section-title"><h2>Automaten bei Musterfirma GmbH</h2><span>3 Automaten</span></div>
+      <div class="machine-list">
+
+        <div class="machine-card" onclick="showDetail()">
+          <div class="coil">
+            <svg viewBox="0 0 52 52">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#eef1ec" stroke-width="6"/>
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#3f7a4e" stroke-width="6" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="18" transform="rotate(-90 26 26)"/>
+            </svg>
+            <div class="coil-icon">🥪</div>
+          </div>
+          <div class="m-info">
+            <p class="m-title">Frische &amp; Snacks</p>
+            <p class="m-loc">Kantine Erdgeschoss</p>
+            <div class="m-tags"><span class="tag status-ok">gut befüllt</span><span class="tag">18 Produkte</span></div>
+          </div>
+          <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+
+        <div class="machine-card">
+          <div class="coil">
+            <svg viewBox="0 0 52 52">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#eef1ec" stroke-width="6"/>
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#c9631a" stroke-width="6" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="95" transform="rotate(-90 26 26)"/>
+            </svg>
+            <div class="coil-icon">☕</div>
+          </div>
+          <div class="m-info">
+            <p class="m-title">Heißgetränke</p>
+            <p class="m-loc">Gang 1. Stock, neben Aufzug</p>
+            <div class="m-tags"><span class="tag status-low">wird bald befüllt</span></div>
+          </div>
+          <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+
+        <div class="machine-card">
+          <div class="coil">
+            <svg viewBox="0 0 52 52">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#eef1ec" stroke-width="6"/>
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#3f7a4e" stroke-width="6" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="40" transform="rotate(-90 26 26)"/>
+            </svg>
+            <div class="coil-icon">🥤</div>
+          </div>
+          <div class="m-info">
+            <p class="m-title">Kaltgetränke</p>
+            <p class="m-loc">Kantine Erdgeschoss</p>
+            <div class="m-tags"><span class="tag status-ok">gut befüllt</span></div>
+          </div>
+          <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+
+      </div>
+      <div style="margin:16px 20px 0; font-size:11.5px; color:var(--ink-soft); line-height:1.5;">
+        💡 Erkennung erfolgt automatisch per Standort (Geofencing), sobald du das Betriebsgelände betrittst. Am Automaten selbst klebt zusätzlich ein QR-Code — praktisch drinnen/mehrstöckig, wo GPS ungenau ist, oder um direkt zu diesem einen Automaten zu springen.
+      </div>
+    </div>
+
+    <!-- PAGE: PUBLIC -->
+    <div class="page" id="page-public">
+      <div class="promo-card" onclick="showNewsDetail()">
+        <div class="promo-emoji">🥪</div>
+        <div style="flex:1; min-width:0;">
+          <p class="promo-eyebrow">Diese Woche neu</p>
+          <p class="promo-title">Pulled-Pork-Wrap mit Coleslaw</p>
+          <p class="promo-sub">Diese Woche an allen Standorten</p>
+        </div>
+        <span class="promo-chevron">›</span>
+      </div>
+
+      <div class="section-title"><h2>Öffentliche Standorte</h2><span id="public-count">3 Standorte · 15 Automaten</span></div>
+
+      <div id="public-loc-list">
+      <div class="loc-group" onclick="showDetail()">
+        <div class="loc-group-head">
+          <div class="lt">
+            <div class="loc-pin">🅿️</div>
+            <div><p class="loc-name">Rasthaus Innviertel Nord</p><p class="loc-addr">A8, AS Ried-Nord</p></div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div style="margin-top:10px;"><span class="loc-count">6 Automaten · Snacks, Kaffee, Kaltgetränke</span></div>
+      </div>
+
+      <div class="loc-group">
+        <div class="loc-group-head">
+          <div class="lt">
+            <div class="loc-pin">🏋️</div>
+            <div><p class="loc-name">Fitnesscenter Aktiv</p><p class="loc-addr">Dorf an der Pram, Sportplatzweg 4</p></div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div style="margin-top:10px;"><span class="loc-count">4 Automaten · Kaltgetränke, Proteinriegel</span></div>
+      </div>
+
+      <div class="loc-group">
+        <div class="loc-group-head">
+          <div class="lt">
+            <div class="loc-pin">🏥</div>
+            <div><p class="loc-name">Bezirkskrankenhaus Ried</p><p class="loc-addr">Besucherbereich, Erdgeschoss</p></div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div style="margin-top:10px;"><span class="loc-count">5 Automaten · Snacks, Kaffee, Kaltgetränke</span></div>
+      </div>
+      </div>
+    </div>
+
+    <!-- PAGE: SORTIMENT DETAIL -->
+    <div class="page" id="page-detail">
+      <div class="detail-back" onclick="backToList()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+        Zurück
+      </div>
+      <div class="detail-hero">
+        <h3>Frische &amp; Snacks</h3>
+        <p>Kantine Erdgeschoss · Musterfirma GmbH</p>
+      </div>
+
+      <div style="margin:0 20px 14px; display:flex; gap:8px;">
+        <div onclick="openMelden('stoerung')" style="flex:1; text-align:center; padding:10px; border-radius:12px; background:#fbe9e2; color:#8a3a1e; font-size:12.5px; font-weight:700; cursor:pointer;">🛠️ Störung melden</div>
+        <div onclick="openMelden('feedback')" style="flex:1; text-align:center; padding:10px; border-radius:12px; background:#eef1ec; color:var(--forest); font-size:12.5px; font-weight:700; cursor:pointer;">💬 Feedback geben</div>
+      </div>
+
+      <div class="pills">
+        <div class="pill active">Alle</div>
+        <div class="pill">Frisch</div>
+        <div class="pill">Süß</div>
+        <div class="pill">Herzhaft</div>
+        <div class="pill">Getränke</div>
+      </div>
+
+      <div class="prod-grid">
+        <div class="prod-card"><p class="prod-name">Hühnersalat-Wrap</p><p class="prod-fach">Fach 12</p><p class="prod-price">4,20 €</p><p class="prod-avail" style="color:#3f7a4e;">● gut verfügbar</p></div>
+        <div class="prod-card"><p class="prod-name">Caprese-Baguette</p><p class="prod-fach">Fach 13</p><p class="prod-price">3,90 €</p><p class="prod-avail" style="color:#3f7a4e;">● gut verfügbar</p></div>
+        <div class="prod-card"><p class="prod-name">Müsliriegel Nuss</p><p class="prod-fach">Fach 21</p><p class="prod-price">1,80 €</p><p class="prod-avail" style="color:#c9631a;">● nur noch 2×</p></div>
+        <div class="prod-card"><p class="prod-name">Fruchtjoghurt</p><p class="prod-fach">Fach 22</p><p class="prod-price">1,50 €</p><p class="prod-avail" style="color:#3f7a4e;">● gut verfügbar</p></div>
+        <div class="prod-card"><p class="prod-name">Apfel, regional</p><p class="prod-fach">Fach 30</p><p class="prod-price">0,90 €</p><p class="prod-avail" style="color:#3f7a4e;">● gut verfügbar</p></div>
+        <div class="prod-card"><p class="prod-name">Salzstangen 40g</p><p class="prod-fach">Fach 31</p><p class="prod-price">1,20 €</p><p class="prod-avail" style="color:#b23b3b;">● ausverkauft</p></div>
+      </div>
+    </div>
+
+    <!-- PAGE: BONUS -->
+    <div class="page" id="page-bonus">
+      <div class="teaser">
+        <div class="icon">🎁</div>
+        <h3 class="display">Dein Bonus-Programm</h3>
+        <p>Sammle bei jedem Einkauf Punkte und tausche sie gegen Gratis-Snacks oder Kaffee ein. Wird eingeblendet, sobald dein Guthaben-System angebunden ist.</p>
+        <span class="soon">Bald verfügbar</span>
+      </div>
+    </div>
+
+    <!-- PAGE: INFOS / NEWS -->
+    <div class="page" id="page-infos">
+      <div class="news-hero">
+        <p class="news-hero-eyebrow">Diese Woche neu</p>
+        <h3>Pulled-Pork-Wrap mit Coleslaw</h3>
+        <p>Unser Sandwich der Woche — jede Woche wechseln wir das Angebot in „Frische &amp; Snacks“. Ab Montag frisch befüllt, solange der Vorrat reicht.</p>
+      </div>
+      <div class="news-list">
+        <div class="news-item">
+          <div class="news-icon">🥪</div>
+          <div>
+            <p class="news-title">Sandwich der Woche: Pulled-Pork-Wrap</p>
+            <p class="news-date">Ab 13.7.2026</p>
+            <p class="news-text">Zartes Pulled Pork, Coleslaw und BBQ-Sauce im Wrap. Nur diese Woche, dann kommt schon das nächste.</p>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-icon">🆕</div>
+          <div>
+            <p class="news-title">Neuer Standort: Fitnesscenter Aktiv</p>
+            <p class="news-date">Seit 1.7.2026</p>
+            <p class="news-text">Ab sofort auch bei uns dabei — 4 Automaten mit Kaltgetränken und Proteinriegeln.</p>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-icon">🔧</div>
+          <div>
+            <p class="news-title">Kurzwartung Heißgetränke-Automat</p>
+            <p class="news-date">Do, 16.7., 8–10 Uhr</p>
+            <p class="news-text">Der Kaffeeautomat im 1. Stock wird für eine Wartung kurz außer Betrieb genommen.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: KONTO -->
+    <div class="page" id="page-konto">
+      <div class="teaser">
+        <div class="icon">💳</div>
+        <h3 class="display">Karte &amp; Guthaben</h3>
+        <p>Melde dich an oder halte deine Legic-/Mifare-Karte an dein Handy, um dein Guthaben und deine letzten Käufe zu sehen. Login ist optional — die Karte allein reicht auch.</p>
+        <span class="soon">Bald verfügbar</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="setTab('main')">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 21s7-6.5 7-11.5A7 7 0 0 0 5 9.5C5 14.5 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
+      Standorte
+    </div>
+    <div class="nav-item" onclick="setTab('infos')">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 8h7M9 12h5"/></svg>
+      Infos
+    </div>
+    <div class="nav-item" onclick="setTab('bonus')">
+      <span class="nav-badge">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+        <span class="lock-dot">i</span>
+      </span>
+      Bonus
+    </div>
+    <div class="nav-item" onclick="setTab('konto')">
+      <span class="nav-badge">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg>
+        <span class="lock-dot">i</span>
+      </span>
+      Konto
+    </div>
+  </div>
+</div>
+
+<script>
+let bereich = 'firma';
+
+// ── Supabase-Anbindung für "Öffentliche Standorte" (page-public) ──
+// SB_ANON_KEY: den "anon"-Key aus Supabase Dashboard → Settings → API eintragen
+// (NICHT den service_role Key — der darf nie in einer installierten App landen!).
+// Zugriff ist per RLS auf reines Lesen von public_standorte/public_sortiment beschränkt
+// (siehe kundenapp-supabase-setup.sql).
+const SB_URL = 'https://vkkrofpcniklbimjdsli.supabase.co';
+const SB_ANON_KEY = 'sb_publishable_GL79JQH10DD3YJpDiybIxg_sEqOQyYb';
+
+function loadPublicStandorte(){
+  if(!SB_ANON_KEY || SB_ANON_KEY==='HIER_ANON_KEY_EINTRAGEN') return; // noch nicht konfiguriert → Demo-Daten bleiben stehen
+  const headers = {'apikey':SB_ANON_KEY, 'Authorization':'Bearer '+SB_ANON_KEY};
+  Promise.all([
+    fetch(SB_URL+'/rest/v1/public_standorte?select=*', {headers}).then(r=>r.json()),
+    fetch(SB_URL+'/rest/v1/public_sortiment?select=*', {headers}).then(r=>r.json())
+  ]).then(([standorte, sortiment])=>{
+    if(!Array.isArray(standorte)) return;
+    const pins = ['📍','🏢','🏭','🏪','🏥','🏋️','🅿️'];
+    let gesamtAutomaten = 0;
+    let html = '';
+    standorte.forEach((s, i)=>{
+      const produkte = sortiment.filter(p=>p.standort_id===s.id);
+      const kategorien = [...new Set(produkte.map(p=>p.kategorie).filter(Boolean))];
+      gesamtAutomaten += (s.automaten||0);
+      html += '<div class="loc-group" onclick="showDetail()">';
+      html += '<div class="loc-group-head"><div class="lt">';
+      html += '<div class="loc-pin">'+pins[i%pins.length]+'</div>';
+      html += '<div><p class="loc-name">'+s.firma+'</p><p class="loc-addr">'+(s.ort||'')+(s.bundesland?' · '+s.bundesland:'')+'</p></div>';
+      html += '</div><span class="chevron">›</span></div>';
+      html += '<div style="margin-top:10px;"><span class="loc-count">'+(s.automaten||0)+' Automaten'+(kategorien.length?' · '+kategorien.join(', '):'')+'</span></div>';
+      html += '</div>';
+    });
+    const listEl = document.getElementById('public-loc-list');
+    const countEl = document.getElementById('public-count');
+    if(listEl) listEl.innerHTML = html || '<div style="padding:20px;text-align:center;color:var(--ink-soft);font-size:13px">Noch keine öffentlichen Standorte hinterlegt.</div>';
+    if(countEl) countEl.textContent = standorte.length+' Standorte · '+gesamtAutomaten+' Automaten';
+  }).catch(e=>console.error('Kunden-App Sync-Fehler:', e));
+}
+document.addEventListener('DOMContentLoaded', loadPublicStandorte);
+
+function setBereich(b){
+  bereich = b;
+  document.getElementById('opt-firma').classList.toggle('active', b==='firma');
+  document.getElementById('opt-public').classList.toggle('active', b==='public');
+  document.getElementById('context-firma').style.display = b==='firma' ? 'block' : 'none';
+  document.getElementById('context-public').style.display = b==='public' ? 'block' : 'none';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(b==='firma' ? 'page-firma' : 'page-public').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelector('.nav-item').classList.add('active');
+}
+
+function setTab(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(name==='main'){ document.getElementById(bereich==='firma' ? 'page-firma' : 'page-public').classList.add('active'); }
+  if(name==='infos'){ document.getElementById('page-infos').classList.add('active'); }
+  if(name==='bonus'){ document.getElementById('page-bonus').classList.add('active'); }
+  if(name==='konto'){ document.getElementById('page-konto').classList.add('active'); }
+  event.currentTarget.classList.add('active');
+}
+function showNewsDetail(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-infos').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[1].classList.add('active');
+}
+function showDetail(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-detail').classList.add('active');
+}
+function backToList(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(bereich==='firma' ? 'page-firma' : 'page-public').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelector('.nav-item').classList.add('active');
+}
+
+function openQr(){
+  document.getElementById('qr-overlay').classList.add('active');
+  document.getElementById('qr-title').textContent = 'Automat wird erkannt …';
+  document.getElementById('qr-sub').textContent = 'QR-Code am Automaten anvisieren.';
+  document.getElementById('qr-go').style.display = 'none';
+  setTimeout(()=>{
+    document.getElementById('qr-title').textContent = 'Automat erkannt ✓';
+    document.getElementById('qr-sub').textContent = '„Frische & Snacks“ · Kantine Erdgeschoss';
+    document.getElementById('qr-go').style.display = 'inline-block';
+  }, 1600);
+}
+function closeQr(){ document.getElementById('qr-overlay').classList.remove('active'); }
+function qrGoToMachine(){
+  closeQr();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-detail').classList.add('active');
+}
+
+// ── MELDEN: Feedback & Störung ──
+// Endpunkt liegt in derselben Netlify-Deployment wie die BetriebsApp (schon mit
+// SUPABASE_SERVICE_KEY konfiguriert) — die Kunden-App ruft ihn per absoluter URL auf.
+const MELDEN_ENDPOINT = 'https://app.great-betriebsverpflegung.com/.netlify/functions/kundenapp-melden';
+
+let meldenArt = 'stoerung';
+let meldenProblem = 'leer';
+let meldenSterne = 5;
+
+function openMelden(art){
+  meldenArt = art;
+  meldenProblem = 'leer';
+  meldenSterne = 5;
+  renderMeldenSheet();
+  document.getElementById('melden-overlay').classList.add('active');
+}
+function closeMelden(){ document.getElementById('melden-overlay').classList.remove('active'); }
+
+function meldenSetTab(art){ meldenArt = art; renderMeldenSheet(); }
+function meldenSetProblem(p){ meldenProblem = p; renderMeldenSheet(); }
+function meldenSetSterne(n){ meldenSterne = n; renderMeldenSheet(); }
+
+function renderMeldenSheet(){
+  const el = document.getElementById('melden-sheet');
+  const probleme = [
+    ['leer','📦 Leer'], ['kaputt','🛠️ Kaputt'], ['schmutzig','🧽 Schmutzig'],
+    ['geld','💰 Geld weg'], ['kuehlung','🌡️ Kühlung'], ['sonstiges','❓ Sonstiges']
+  ];
+  let h = '';
+  h += '<div class="melden-tabs">';
+  h += '<div class="melden-tab '+(meldenArt==='stoerung'?'active':'')+'" onclick="meldenSetTab(\'stoerung\')">🛠️ Störung melden</div>';
+  h += '<div class="melden-tab '+(meldenArt==='feedback'?'active':'')+'" onclick="meldenSetTab(\'feedback\')">💬 Feedback</div>';
+  h += '</div>';
+
+  if(meldenArt==='stoerung'){
+    h += '<h3>Was ist los?</h3><p class="sub">Wir leiten das direkt an unser Team weiter.</p>';
+    h += '<div class="melden-field"><label>Problem</label><div class="melden-problem-grid">';
+    probleme.forEach(function(p){
+      h += '<div class="melden-problem-chip '+(meldenProblem===p[0]?'active':'')+'" onclick="meldenSetProblem(\''+p[0]+'\')">'+p[1]+'</div>';
+    });
+    h += '</div></div>';
+    h += '<div class="melden-field"><label>Kurz beschreiben (optional)</label><textarea class="melden-textarea" id="meldenText" placeholder="z.B. Fach 12 ist leer"></textarea></div>';
+    h += '<button class="melden-submit" onclick="meldenAbsenden()">Melden</button>';
+  } else {
+    h += '<h3>Wie war\'s?</h3><p class="sub">Dein Feedback hilft uns, besser zu werden.</p>';
+    h += '<div class="melden-field"><label>Bewertung</label><div class="melden-stars">';
+    for(let i=1;i<=5;i++){ h += '<span class="'+(i<=meldenSterne?'filled':'')+'" onclick="meldenSetSterne('+i+')">★</span>'; }
+    h += '</div></div>';
+    h += '<div class="melden-field"><label>Nachricht (optional)</label><textarea class="melden-textarea" id="meldenText" placeholder="Was können wir besser machen?"></textarea></div>';
+    h += '<button class="melden-submit" onclick="meldenAbsenden()">Absenden</button>';
+  }
+  h += '<div class="melden-close" onclick="closeMelden()">Abbrechen</div>';
+  el.innerHTML = h;
+}
+
+function meldenAbsenden(){
+  const text = (document.getElementById('meldenText')||{}).value || '';
+  const body = meldenArt==='feedback'
+    ? { art:'feedback', bewertung: meldenSterne, text: text, firma:'', standort_id:'' }
+    : { art:'stoerung', problem: meldenProblem, text: text, firma:'', automat_nr:'', standort_id:'' };
+
+  const el = document.getElementById('melden-sheet');
+  el.innerHTML = '<div class="melden-success"><div class="ico">⏳</div><p class="sub">Wird gesendet…</p></div>';
+
+  fetch(MELDEN_ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.success){
+        el.innerHTML = '<div class="melden-success"><div class="ico">✅</div><h3>Danke!</h3><p class="sub">'+(meldenArt==='feedback'?'Dein Feedback wurde übermittelt.':'Wir haben deine Meldung erhalten und kümmern uns.')+'</p></div>';
+        setTimeout(closeMelden, 1800);
+      } else {
+        el.innerHTML = '<div class="melden-success"><div class="ico">⚠️</div><h3>Hat nicht geklappt</h3><p class="sub">Bitte versuch es gleich noch einmal.</p></div><div class="melden-close" onclick="closeMelden()">Schließen</div>';
+      }
+    })
+    .catch(function(){
+      el.innerHTML = '<div class="melden-success"><div class="ico">⚠️</div><h3>Keine Verbindung</h3><p class="sub">Bitte später erneut versuchen.</p></div><div class="melden-close" onclick="closeMelden()">Schließen</div>';
+    });
+}
+</script>
+
+</body>
+</html>
