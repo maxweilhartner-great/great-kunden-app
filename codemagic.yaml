@@ -20,6 +20,10 @@ workflows:
           cd android
           chmod +x ./gradlew
           ./gradlew bundleRelease
+      - name: Build Android APK (debug, zum direkten Testen aufs Handy)
+        script: |
+          cd android
+          ./gradlew assembleDebug
     artifacts:
       - android/app/build/outputs/**/*.aab
       - android/app/build/outputs/**/*.apk
