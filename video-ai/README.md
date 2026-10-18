@@ -79,7 +79,7 @@ Gedacht für Ubuntu 22.04/24.04, z. B. Hetzner Cloud **CX32** (4 vCPU, 8 GB RAM,
 3. **Per SSH auf den Server** (`ssh root@<IP>`) und ausführen:
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/maxweilhartner-great/great-kunden-app/main/video-ai/deploy/install.sh | bash -s -- video.great.at
+   curl -fsSL https://raw.githubusercontent.com/maxweilhartner-great/great-kunden-app/main/video-ai/deploy/install.sh | bash -s -- video.great-betriebsverpflegung.com
    ```
 
    Das Skript installiert Docker, richtet die Firewall ein, erzeugt Passwörter, baut die App inkl.

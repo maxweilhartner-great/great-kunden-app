@@ -2,7 +2,7 @@
 # GR·EAT Video AI – Installation auf einem frischen Ubuntu-Server (22.04/24.04), z. B. Hetzner Cloud.
 #
 # Aufruf (als root auf dem Server):
-#   curl -fsSL https://raw.githubusercontent.com/maxweilhartner-great/great-kunden-app/main/video-ai/deploy/install.sh | bash -s -- video.great.at
+#   curl -fsSL https://raw.githubusercontent.com/maxweilhartner-great/great-kunden-app/main/video-ai/deploy/install.sh | bash -s -- video.great-betriebsverpflegung.com
 #
 # Erneut ausführen = aktualisieren (holt den neuesten Stand und baut neu; Daten und Passwörter bleiben).
 set -euo pipefail
@@ -36,7 +36,7 @@ fi
 cd "$DIR/video-ai"
 
 if [ ! -f .env ]; then
-  if [ -z "$DOMAIN" ]; then echo "Bitte die Adresse angeben, z. B.: bash install.sh video.great.at"; exit 1; fi
+  if [ -z "$DOMAIN" ]; then echo "Bitte die Adresse angeben, z. B.: bash install.sh video.great-betriebsverpflegung.com"; exit 1; fi
   echo "==> Erstkonfiguration für $DOMAIN"
   TEAM_PW="$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-10)"
   ADMIN_PW="$(openssl rand -base64 24 | tr -d '/+=' | cut -c1-14)"
