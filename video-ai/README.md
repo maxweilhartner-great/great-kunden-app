@@ -100,7 +100,7 @@ unter „Konten“ angezeigt) und Client-ID/Secret in die `.env` schreiben. Dann
 1. **Instagram + Facebook** (eine Meta-App für beide) – [developers.facebook.com](https://developers.facebook.com/apps)
    - App-Typ „Business“, Produkte „Facebook Login for Business“ und „Instagram Graph API“
    - Weiterleitung: `<PUBLIC_BASE_URL>/auth/meta/callback`
-   - Berechtigungen: `pages_show_list, pages_read_engagement, pages_manage_posts, publish_video,
+   - Berechtigungen: `pages_show_list, pages_read_engagement, pages_manage_posts,
      business_management, instagram_basic, instagram_content_publish`
    - Das Instagram-Konto muss ein **Business-/Creator-Konto** sein und mit der Facebook-Seite verbunden.
    - Für den Livebetrieb: App-Review bei Meta für diese Berechtigungen (solange die App im

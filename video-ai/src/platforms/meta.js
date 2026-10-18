@@ -11,7 +11,6 @@ const SCOPES = [
   'pages_show_list',
   'pages_read_engagement',
   'pages_manage_posts',
-  'publish_video',
   'business_management',
   'instagram_basic',
   'instagram_content_publish',
@@ -21,9 +20,10 @@ const shared = {
   configured: () => Boolean(config.META_APP_ID && config.META_APP_SECRET),
   requiredEnv: ['META_APP_ID', 'META_APP_SECRET'],
   authUrl(state, redirectUri) {
-    const q = new URLSearchParams({
-      client_id: config.META_APP_ID, redirect_uri: redirectUri, state, scope: SCOPES.join(','), response_type: 'code',
-    });
+    const q = new URLSearchParams({ client_id: config.META_APP_ID, redirect_uri: redirectUri, state, response_type: 'code' });
+    // Facebook Login for Business arbeitet mit einer „Konfiguration“ statt einer Rechte-Liste.
+    if (config.META_CONFIG_ID) q.set('config_id', config.META_CONFIG_ID);
+    else q.set('scope', SCOPES.join(','));
     return `https://www.facebook.com/${config.META_GRAPH_VERSION}/dialog/oauth?${q}`;
   },
   // Liefert alle Seiten inkl. verknüpftem Instagram-Konto; der Aufrufer speichert beide Plattformen.
