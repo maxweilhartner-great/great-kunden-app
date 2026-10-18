@@ -207,3 +207,9 @@ code { background: #f1eee4; border-radius: 6px; padding: 2px 6px; font-size: 12p
 .music-row { display: grid; grid-template-columns: 1fr minmax(160px, 260px) auto; gap: 10px; align-items: center; border-top: 1px solid var(--line); padding-top: 8px; font-size: 14px; }
 .music-row audio { width: 100%; height: 32px; }
 @media (max-width: 640px) { .music-row { grid-template-columns: 1fr auto; } .music-row audio { grid-column: 1 / -1; } }
+.es-form { display: flex; gap: 8px; }
+.es-form input { flex: 1; min-width: 0; }
+.es-row { display: grid; grid-template-columns: 48px 1fr auto auto; gap: 10px; align-items: center; border-top: 1px solid var(--line); padding-top: 8px; font-size: 14px; }
+.es-row img, .es-row .es-cover { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: var(--line); display: grid; place-items: center; }
+.es-row .es-tags { font-size: 12px; }
+@media (max-width: 640px) { .es-row { grid-template-columns: 48px 1fr; } .es-row .btn { grid-column: span 1; } }

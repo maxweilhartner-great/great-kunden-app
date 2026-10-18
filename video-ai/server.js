@@ -242,6 +242,7 @@ app.get('/api/meta', requireRole('team'), (req, res) => {
     categories: Object.fromEntries(Object.entries(CATEGORIES).map(([k, v]) => [k, `${v.emoji} ${v.label}`])),
     platforms: PLATFORM_IDS.map((id) => ({ id, name: PLATFORMS[id].name, connected: Boolean(store.getAccount(id)) })),
     music: listMusic(),
+    epidemic: epidemic.configured(),
     limits: { min: config.MIN_SECONDS, max: config.MAX_SECONDS, maxUploadMb: config.MAX_UPLOAD_MB },
   });
 });
@@ -275,6 +276,23 @@ app.delete('/api/music/:name', requireRole('admin'), (req, res) => {
   res.json({ ok: true });
 });
 app.use('/music', requireRole('admin'), express.static(config.MUSIC_DIR));
+
+// ---------- Epidemic Sound: Katalog durchsuchen, vorhören, übernehmen (Admin) ----------
+const epidemic = require('./src/music/epidemic');
+const esGuard = (req, res, next) => (epidemic.configured() ? next() : res.status(400).json({ error: 'Epidemic Sound ist noch nicht eingerichtet (EPIDEMIC_API_KEY).' }));
+const esError = (res, err) => res.status(err.status === 401 || err.status === 403 ? 502 : 500).json({ error: err.message });
+app.get('/api/music/epidemic/search', requireRole('admin'), esGuard, async (req, res) => {
+  try { res.json(await epidemic.search(String(req.query.q || '').slice(0, 100), { offset: Number(req.query.offset) || 0 })); } catch (err) { esError(res, err); }
+});
+app.get('/api/music/epidemic/preview/:id', requireRole('admin'), esGuard, async (req, res) => {
+  try { res.json(await epidemic.preview(req.params.id)); } catch (err) { esError(res, err); }
+});
+app.post('/api/music/epidemic/:id/import', requireRole('admin'), esGuard, async (req, res) => {
+  try { res.status(201).json({ added: await epidemic.importTrack(req.params.id) }); } catch (err) { esError(res, err); }
+});
+app.get('/api/music/epidemic/diagnose', requireRole('admin'), esGuard, async (req, res) => {
+  try { res.json(await epidemic.diagnose()); } catch (err) { res.status(500).json({ error: err.message, data: err.data }); }
+});
 
 // ---------- Konto-Verknüpfung (OAuth) ----------
 

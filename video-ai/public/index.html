@@ -101,6 +101,17 @@
         </label>
         <div id="musicList" class="music-list"></div>
       </div>
+
+      <div id="esBox" class="card stack" hidden style="margin-top:16px">
+        <h2 style="margin:0">🔎 Epidemic Sound durchsuchen</h2>
+        <p class="muted" style="margin:0">Den ganzen Katalog durchsuchen – z. B. „fröhlich“, „acoustic“, „kitchen“, „summer“. Vorhören, dann „Für Reels übernehmen“.</p>
+        <form id="esForm" class="es-form">
+          <input id="esTerm" type="search" placeholder="Stimmung, Genre oder Stichwort …" maxlength="100">
+          <button class="btn primary" type="submit">Suchen</button>
+        </form>
+        <div id="esResults" class="music-list"></div>
+        <button id="esMore" class="btn small ghost" type="button" hidden style="align-self:flex-start">Mehr laden</button>
+      </div>
     </section>
   </main>
 
