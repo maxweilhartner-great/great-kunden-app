@@ -39,7 +39,7 @@ h2 { font-size: 18px; margin: 0 0 8px; }
   background: var(--forest); color: var(--paper);
 }
 .brand { display: flex; align-items: center; gap: 8px; }
-.ring { width: 26px; height: 26px; }
+.brand .logo { height: 34px; width: auto; display: block; }
 .wordmark { font-weight: 700; letter-spacing: 0.14em; color: var(--paper); }
 .wordmark b { color: var(--mango); }
 .product { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #b9c7bd; border-left: 1px solid rgba(255,255,255,.2); padding-left: 8px; }

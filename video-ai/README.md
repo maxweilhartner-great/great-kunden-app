@@ -26,7 +26,8 @@ keine kostenpflichtigen Kredit-Dienste.
 - Auswahl des besten Ausschnitts (15–30 s): möglichst viel Gesprochenes, keine angeschnittenen Sätze,
   keine lange Stille am Anfang/Ende, wacklige erste Sekunde übersprungen
 - Kurze Clips (< 15 s) werden geloopt; Querformat bekommt einen unscharfen Hintergrund statt Balken
-- GR·EAT-Logo oben links, optionale Überschrift in Mango-Box für die ersten Sekunden
+- Offizielles GR·EAT-Logo oben links, optionale Überschrift in Mango-Box für die ersten Sekunden
+- Abspann: in den letzten 2,5 s blendet das Logo mit Slogan „Immer gut versorgt“ ein
 - Hintergrundmusik aus `brand/music/`, wird automatisch leiser, wenn jemand spricht
 - Fotos werden zu einem Reel mit sanftem Zoom (Ken-Burns-Effekt)
 - Ausgabe: H.264/AAC, 1080×1920, 30 fps – passt für alle fünf Plattformen
@@ -110,8 +111,12 @@ unter „Konten“ angezeigt) und Client-ID/Secret in die `.env` schreiben. Dann
 
 ## Eigenes Logo, Schrift und Musik
 
-- **Logo**: offizielles Logo als transparentes PNG unter `brand/logo.png` ablegen (das mitgelieferte ist
-  mit `npm run logo` aus Ring + Wortmarke erzeugt).
+- **Logo**: Das offizielle Logo liegt als `brand/GREAT-Logo-Slogan-PAN-364C.pdf` bei. `npm run logo`
+  (braucht `pdftocairo` aus poppler-utils + Pillow) erzeugt daraus alle Varianten: `brand/logo.png`
+  (Wortmarke auf hellem Schild, oben links im Reel), `brand/logo-outro.png` (Logo mit Slogan, Abspann),
+  `brand/logo-full.png`/`logo-mark.png` (transparent) und `public/logo-white.png` (Kopfzeile der Web-App).
+  Bei einem neuen Logo einfach die Datei austauschen und `npm run logo` erneut ausführen.
+- **Abspann**: Dauer über `OUTRO_SECONDS` (Standard 2,5; `0` = kein Abspann).
 - **Musik**: lizenzfreie Stücke nach `brand/music/` (siehe README dort).
 - **Untertitel-Schrift**: `SUBTITLE_FONT` (muss auf dem Server installiert sein; Standard: Inter).
 
@@ -126,7 +131,7 @@ video-ai/
 │   ├── jobs.js             Warteschlangen für Rendern und Posten
 │   ├── store.js            Datenhaltung (JSON-Datei in data/)
 │   └── platforms/          Instagram, Facebook (meta.js), LinkedIn, YouTube, TikTok
-├── scripts/                transcribe.py (Whisper), normalize_photo.py, make_logo.py
+├── scripts/                transcribe.py (Whisper), normalize_photo.py, prepare_logo.py
 ├── public/                 Weboberfläche (ohne Build-Schritt)
 ├── brand/                  Logo und Musik
 └── test/                   npm test

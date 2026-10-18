@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "logo": "python3 scripts/make_logo.py brand/logo.png",
+    "logo": "python3 scripts/prepare_logo.py brand/GREAT-Logo-Slogan-PAN-364C.pdf",
     "test": "node --test test/*.test.js"
   },
   "engines": {

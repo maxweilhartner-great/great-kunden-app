@@ -34,6 +34,8 @@ const config = {
 
   BRAND_DIR: path.join(ROOT, 'brand'),
   LOGO_FILE: path.resolve(ROOT, env('LOGO_FILE', 'brand/logo.png')),
+  OUTRO_FILE: path.resolve(ROOT, env('OUTRO_FILE', 'brand/logo-outro.png')),
+  OUTRO_SECONDS: Number(env('OUTRO_SECONDS', 2.5)),
   MUSIC_DIR: path.resolve(ROOT, env('MUSIC_DIR', 'brand/music')),
   FONT_NAME: env('SUBTITLE_FONT', 'Inter'),
 

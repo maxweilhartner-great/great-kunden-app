@@ -238,26 +238,41 @@ const encodeArgs = (length, out) => [
   '-movflags', '+faststart', out,
 ];
 
+// Logo oben links + Abspann (Logo mit Slogan „Immer gut versorgt“) in den letzten Sekunden.
+// Erwartet das Bild unter [subbed], liefert [v]; `idx` ist der nächste freie FFmpeg-Eingang.
+function branding(idx, length) {
+  const inputs = ['-i', config.LOGO_FILE];
+  const filters = [`[${idx}:v]scale=220:-1,format=rgba[logo]`];
+  const outroStart = (length - config.OUTRO_SECONDS).toFixed(2);
+  if (!(config.OUTRO_SECONDS > 0) || !fs.existsSync(config.OUTRO_FILE)) {
+    filters.push('[subbed][logo]overlay=48:96[v]');
+    return { inputs, filters, next: idx + 1 };
+  }
+  inputs.push('-loop', '1', '-framerate', String(FPS), '-t', String(length), '-i', config.OUTRO_FILE);
+  filters.push(
+    `[subbed][logo]overlay=48:96:enable='lt(t,${outroStart})'[branded]`,
+    `[${idx + 1}:v]format=rgba,fade=t=in:st=${outroStart}:d=0.5:alpha=1[outro]`,
+    `[branded][outro]overlay=(W-w)/2:(H-h)/2:enable='gte(t,${outroStart})'[v]`,
+  );
+  return { inputs, filters, next: idx + 2 };
+}
+
 async function renderVideo({ source, meta, window, music, assFile, workDir, out }) {
   const inputs = [];
   if (window.loop) inputs.push('-stream_loop', '-1');
   inputs.push('-ss', String(window.start), '-t', String(window.length), '-i', source);
-  inputs.push('-i', config.LOGO_FILE);
-  let musicIdx = null;
-  if (music) {
-    inputs.push('-stream_loop', '-1', '-i', music.file);
-    musicIdx = 2;
-  }
+  const brand = branding(1, window.length);
+  inputs.push(...brand.inputs);
+  if (music) inputs.push('-stream_loop', '-1', '-i', music.file);
   const aspect = meta.width / meta.height || 9 / 16;
   const filters = [
     fitFilter('0:v', aspect, 'base'),
     `[base]fps=${FPS},ass=${path.basename(assFile)}[subbed]`,
-    `[1:v]scale=300:-1,format=rgba,colorchannelmixer=aa=0.95[logo]`,
-    `[subbed][logo]overlay=56:110[v]`,
+    ...brand.filters,
   ];
   if (meta.hasAudio || music) {
     filters.push(audioGraph({
-      hasVoice: meta.hasAudio, voiceLabel: '0:a', musicLabel: music ? `${musicIdx}:a` : null, length: window.length,
+      hasVoice: meta.hasAudio, voiceLabel: '0:a', musicLabel: music ? `${brand.next}:a` : null, length: window.length,
     }));
   }
   const maps = ['-map', '[v]'];
@@ -280,13 +295,13 @@ async function renderPhotos({ photos, music, assFile, workDir, out, length }) {
     filters.push(`[fit${i}]zoompan=z='${z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${W}x${H}:fps=${FPS},setsar=1[p${i}]`);
   });
   filters.push(`${photos.map((_, i) => `[p${i}]`).join('')}concat=n=${photos.length}:v=1:a=0,ass=${path.basename(assFile)}[subbed]`);
-  const logoIdx = photos.length;
-  inputs.push('-i', config.LOGO_FILE);
-  filters.push(`[${logoIdx}:v]scale=300:-1,format=rgba[logo]`, `[subbed][logo]overlay=56:110[v]`);
+  const brand = branding(photos.length, length);
+  inputs.push(...brand.inputs);
+  filters.push(...brand.filters);
   const maps = ['-map', '[v]'];
   if (music) {
     inputs.push('-stream_loop', '-1', '-i', music.file);
-    filters.push(audioGraph({ hasVoice: false, musicLabel: `${logoIdx + 1}:a`, length }));
+    filters.push(audioGraph({ hasVoice: false, musicLabel: `${brand.next}:a`, length }));
     maps.push('-map', '[aout]');
   }
   await run(config.FFMPEG, [
