@@ -1,0 +1,20 @@
+{
+  "name": "great-video-ai",
+  "version": "0.1.0",
+  "description": "GR·EAT Video AI – Social-Media-Fabrik für tägliche Reels (Upload, Auto-Schnitt, Untertitel, Freigabe, Posting)",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "logo": "python3 scripts/make_logo.py brand/logo.png",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.22.3",
+    "multer": "^2.4.0"
+  }
+}

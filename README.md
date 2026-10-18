@@ -4,6 +4,10 @@ Dieses Projekt verpackt den Kunden-App-Prototyp (Standorte, Sortiment, Bonus, Ko
 als installierbare native App für Android (Play Store) und iOS (App Store),
 mit Hilfe von [Capacitor](https://capacitorjs.com).
 
+> **Neu:** Im Ordner [`video-ai/`](video-ai/README.md) liegt **GR·EAT Video AI** – die Web-App für tägliche
+> Social-Media-Reels (Upload → automatischer Schnitt mit Untertiteln/Logo/Musik → Freigabe → Posten auf
+> Instagram, Facebook, LinkedIn, YouTube und TikTok).
+
 ## Inhalt
 
 - `www/index.html` — die App selbst (aktueller Prototyp-Stand)
