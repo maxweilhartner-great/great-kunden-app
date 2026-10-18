@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f3d2e">
+  <title>GR·EAT Video AI</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="/logo-white.png" alt="GR·EAT" width="64" height="44">
+      <span class="product">Video AI</span>
+    </div>
+    <nav class="tabs" id="tabs" hidden>
+      <a href="#hochladen" data-tab="hochladen">Hochladen</a>
+      <a href="#freigabe" data-tab="freigabe">Freigabe <span class="badge" id="reviewCount" hidden></span></a>
+      <a href="#konten" data-tab="konten" data-admin>Konten</a>
+    </nav>
+    <button class="link-btn" id="logoutBtn" hidden>Abmelden</button>
+  </header>
+
+  <main id="app">
+    <section id="view-login" class="view narrow" hidden>
+      <h1>Anmelden</h1>
+      <p class="muted">Team-Passwort zum Hochladen, Admin-Passwort für Freigabe und Konten.</p>
+      <form id="loginForm" class="card stack">
+        <label>Passwort <input type="password" name="password" autocomplete="current-password" required></label>
+        <button class="btn primary" type="submit">Anmelden</button>
+        <p class="error" id="loginError" hidden></p>
+      </form>
+    </section>
+
+    <section id="view-hochladen" class="view narrow" hidden>
+      <h1>Video oder Fotos hochladen</h1>
+      <p class="muted">Einfach filmen, hochladen, fertig. Die App schneidet ein Reel mit Untertiteln, Logo und Musik – danach wird es freigegeben.</p>
+      <form id="uploadForm" class="stack">
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" name="files" accept="video/*,image/*,.heic,.heif" multiple>
+          <span class="dz-icon" aria-hidden="true">＋</span>
+          <span class="dz-title">Video aufnehmen oder auswählen</span>
+          <span class="dz-hint">Mehrere Videos = mehrere Reels · mehrere Fotos = ein Foto-Reel</span>
+        </label>
+        <ul class="file-list" id="fileList"></ul>
+
+        <div class="card stack">
+          <label>Dein Name <input name="uploader" id="uploaderName" placeholder="z. B. Martin (Tour Nord)" autocomplete="name"></label>
+          <fieldset>
+            <legend>Was ist zu sehen?</legend>
+            <div class="chips" id="categoryChips"></div>
+          </fieldset>
+          <label><span class="lbl">Kurz beschreiben <span class="opt">(hilft bei den Texten)</span></span>
+            <textarea name="note" rows="2" placeholder="z. B. Automat im Werk Linz frisch mit Weckerl befüllt"></textarea>
+          </label>
+          <label><span class="lbl">Kunde / Ort <span class="opt">(optional)</span></span> <input name="location" placeholder="z. B. Firma Muster, Wels"></label>
+          <label><span class="lbl">Überschrift im Video <span class="opt">(optional, kurz)</span></span> <input name="hook" maxlength="40" placeholder="z. B. Frisch nachgefüllt!"></label>
+          <fieldset>
+            <legend>Wo soll es erscheinen?</legend>
+            <div class="chips" id="platformChips"></div>
+          </fieldset>
+        </div>
+
+        <button class="btn primary big" type="submit" id="uploadBtn" disabled>Hochladen</button>
+        <div class="progress" id="uploadProgress" hidden><div class="bar"></div><span></span></div>
+        <p class="error" id="uploadError" hidden></p>
+      </form>
+      <div class="card success" id="uploadDone" hidden>
+        <h2>Danke! 🎬</h2>
+        <p>Dein Material wird jetzt automatisch geschnitten und landet danach in der Freigabe-Liste.</p>
+        <button class="btn" id="uploadAgain">Noch etwas hochladen</button>
+      </div>
+    </section>
+
+    <section id="view-freigabe" class="view" hidden>
+      <div class="view-head">
+        <h1>Freigabe-Liste</h1>
+        <div class="chips filter" id="filterChips">
+          <button data-filter="review" class="chip active">Zur Freigabe</button>
+          <button data-filter="work" class="chip">In Arbeit</button>
+          <button data-filter="done" class="chip">Veröffentlicht</button>
+          <button data-filter="all" class="chip">Alle</button>
+        </div>
+      </div>
+      <div id="itemList" class="items"></div>
+    </section>
+
+    <section id="view-konten" class="view" hidden>
+      <h1>Konten verknüpfen</h1>
+      <p class="muted">Nach der Freigabe postet die App über die offiziellen Schnittstellen auf diese Konten.</p>
+      <div class="notice" id="accountNotice" hidden></div>
+      <div id="accountList" class="accounts"></div>
+    </section>
+  </main>
+
+  <template id="tpl-item">
+    <article class="item card">
+      <div class="item-media"></div>
+      <div class="item-body"></div>
+    </article>
+  </template>
+
+  <div class="toast" id="toast" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>
