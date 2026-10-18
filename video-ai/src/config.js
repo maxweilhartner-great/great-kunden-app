@@ -55,7 +55,7 @@ const config = {
   INSTAGRAM_APP_ID: env('INSTAGRAM_APP_ID'),
   INSTAGRAM_APP_SECRET: env('INSTAGRAM_APP_SECRET'),
   EPIDEMIC_API_KEY: env('EPIDEMIC_API_KEY'),
-  EPIDEMIC_API_BASE: env('EPIDEMIC_API_BASE', 'https://partner-content-api.epidemicsound.com'),
+  EPIDEMIC_API_BASE: env('EPIDEMIC_API_BASE', 'https://api.epidemicsound.com'),
   EPIDEMIC_USER_ID: env('EPIDEMIC_USER_ID', 'great-video-ai'),
   LINKEDIN_CLIENT_ID: env('LINKEDIN_CLIENT_ID'),
   LINKEDIN_CLIENT_SECRET: env('LINKEDIN_CLIENT_SECRET'),
