@@ -1,0 +1,36 @@
+# GR·EAT Video AI auf einem eigenen Server: App + Caddy (automatisches HTTPS über Let's Encrypt).
+# Wird von install.sh eingerichtet; Einstellungen stehen in ../.env
+services:
+  app:
+    build:
+      context: ..
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATA_DIR: /data
+      PORT: "3000"
+    volumes:
+      - video-data:/data
+      - ../brand:/app/brand
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN fehlt in deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  video-data:
+  caddy-data:
+  caddy-config:

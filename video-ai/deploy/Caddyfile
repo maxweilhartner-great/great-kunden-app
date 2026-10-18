@@ -1,0 +1,10 @@
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:3000 {
+		# große Handyvideos dürfen lange zum Hochladen brauchen
+		transport http {
+			read_timeout 30m
+			write_timeout 30m
+		}
+	}
+}
