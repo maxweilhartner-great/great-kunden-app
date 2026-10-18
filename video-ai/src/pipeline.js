@@ -214,6 +214,48 @@ function fitFilter(input, aspect, out, w = W, h = H) {
   ].join(';');
 }
 
+// ---------- Verschönern: Stabilisieren, Ausschnitt, Bildverbesserung ----------
+
+const filterCache = {};
+async function hasFilter(name) {
+  if (!(name in filterCache)) {
+    try {
+      const { stdout } = await run(config.FFMPEG, ['-hide_banner', '-filters']);
+      filterCache[name] = new RegExp(`\\s${name}\\s`).test(stdout);
+    } catch { filterCache[name] = false; }
+  }
+  return filterCache[name];
+}
+
+// Leicht entrauschen, Kontrast/Farbe etwas kräftiger, nachschärfen – Lebensmittel wirken appetitlicher.
+const ENHANCE = 'hqdn3d=1.5:1.5:6:6,eq=contrast=1.06:saturation=1.15:gamma=1.03,unsharp=5:5:0.5';
+
+// Ausschnitt als Anteile des Bildes (x, y, w, h zwischen 0 und 1), gewählt in der Freigabe.
+function cleanCrop(c) {
+  if (!c) return null;
+  const v = ['x', 'y', 'w', 'h'].map((k) => Number(c[k]));
+  if (v.some((n) => !Number.isFinite(n))) return null;
+  let [x, y, w, h] = v;
+  w = Math.min(1, Math.max(0.05, w)); h = Math.min(1, Math.max(0.05, h));
+  x = Math.min(1 - w, Math.max(0, x)); y = Math.min(1 - h, Math.max(0, y));
+  if (w > 0.98 && h > 0.98) return null;
+  return { x, y, w, h };
+}
+const cropFilter = (c) => `crop=trunc(iw*${c.w.toFixed(4)}/2)*2:trunc(ih*${c.h.toFixed(4)}/2)*2:trunc(iw*${c.x.toFixed(4)}):trunc(ih*${c.y.toFixed(4)})`;
+
+// Erster Durchgang der Stabilisierung: Kamerabewegung im gewählten Ausschnitt messen.
+async function stabilizeDetect(source, window, workDir) {
+  await run(config.FFMPEG, [
+    '-y', '-ss', String(window.start), '-t', String(window.length), '-i', source,
+    '-vf', 'vidstabdetect=shakiness=6:accuracy=12:result=transforms.trf', '-f', 'null', '-',
+  ], { cwd: workDir });
+}
+
+// Vorschaubild des Originals für das Ausschnitt-Werkzeug (richtig gedreht).
+async function sourcePreview(source, at, out) {
+  await run(config.FFMPEG, ['-y', '-ss', String(at), '-i', source, '-frames:v', '1', '-vf', 'scale=720:-2', '-q:v', '4', out]);
+}
+
 function audioGraph({ hasVoice, voiceLabel, musicLabel, length }) {
   const fadeOut = Math.max(0, length - 1.2).toFixed(2);
   const fades = `afade=t=in:d=0.3,afade=t=out:st=${fadeOut}:d=1.2`;
@@ -257,16 +299,24 @@ function branding(idx, length) {
   return { inputs, filters, next: idx + 2 };
 }
 
-async function renderVideo({ source, meta, window, music, assFile, workDir, out }) {
+async function renderVideo({ source, meta, window, music, assFile, workDir, out, look = {} }) {
   const inputs = [];
   if (window.loop) inputs.push('-stream_loop', '-1');
   inputs.push('-ss', String(window.start), '-t', String(window.length), '-i', source);
   const brand = branding(1, window.length);
   inputs.push(...brand.inputs);
   if (music) inputs.push('-stream_loop', '-1', '-i', music.file);
-  const aspect = meta.width / meta.height || 9 / 16;
+  let aspect = meta.width / meta.height || 9 / 16;
+  const pre = [];
+  if (look.stabilize) pre.push('vidstabtransform=input=transforms.trf:smoothing=15:optzoom=1:zoomspeed=0.2');
+  if (look.crop) {
+    pre.push(cropFilter(look.crop));
+    aspect = (meta.width * look.crop.w) / (meta.height * look.crop.h);
+  }
+  if (look.enhance) pre.push(ENHANCE);
   const filters = [
-    fitFilter('0:v', aspect, 'base'),
+    ...(pre.length ? [`[0:v]${pre.join(',')}[pre]`] : []),
+    fitFilter(pre.length ? 'pre' : '0:v', aspect, 'base'),
     `[base]fps=${FPS},ass=${path.basename(assFile)}[subbed]`,
     ...brand.filters,
   ];
@@ -282,7 +332,7 @@ async function renderVideo({ source, meta, window, music, assFile, workDir, out 
   ], { cwd: workDir });
 }
 
-async function renderPhotos({ photos, music, assFile, workDir, out, length }) {
+async function renderPhotos({ photos, music, assFile, workDir, out, length, look = {} }) {
   const per = length / photos.length;
   const frames = Math.round(per * FPS);
   const inputs = [];
@@ -291,7 +341,8 @@ async function renderPhotos({ photos, music, assFile, workDir, out, length }) {
     inputs.push('-loop', '1', '-framerate', String(FPS), '-t', per.toFixed(3), '-i', p.file);
     const zoomIn = i % 2 === 0; // abwechselnd rein- und rauszoomen (Ken-Burns-Effekt)
     const z = zoomIn ? `min(1+on*0.12/${frames},1.12)` : `max(1.12-on*0.12/${frames},1)`;
-    filters.push(fitFilter(`${i}:v`, p.width / p.height, `fit${i}`, W, H));
+    if (look.enhance) filters.push(`[${i}:v]${ENHANCE}[en${i}]`);
+    filters.push(fitFilter(look.enhance ? `en${i}` : `${i}:v`, p.width / p.height, `fit${i}`, W, H));
     filters.push(`[fit${i}]zoompan=z='${z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${W}x${H}:fps=${FPS},setsar=1[p${i}]`);
   });
   filters.push(`${photos.map((_, i) => `[p${i}]`).join('')}concat=n=${photos.length}:v=1:a=0,ass=${path.basename(assFile)}[subbed]`);
@@ -324,7 +375,8 @@ async function normalizePhoto(src, dst) {
 
 /**
  * Erstellt (oder erneuert) das Reel für einen Eintrag.
- * `item.edit` enthält optionale manuelle Vorgaben aus der Freigabe (Start, Länge, Hook, Musik, Untertitel an/aus).
+ * `item.edit` enthält optionale manuelle Vorgaben aus der Freigabe (Start, Länge, Hook, Musik, Untertitel an/aus,
+ * Ausschnitt, Verschönern/Stabilisieren an/aus).
  * `onProgress(text)` meldet den Zwischenstand an die Oberfläche.
  */
 async function processItem(item, onProgress = () => {}) {
@@ -336,7 +388,7 @@ async function processItem(item, onProgress = () => {}) {
   const tmpOut = path.join(workDir, 'reel.mp4');
   const assFile = path.join(workDir, 'subs.ass');
   const music = pickMusic(edit.music);
-  if (!music && edit.music !== 'none') warnings.push('Keine Musik im Ordner brand/music gefunden – Reel ohne Hintergrundmusik.');
+  if (!music && edit.music !== 'none') warnings.push('Noch keine Musik hochgeladen (Konten → Hintergrundmusik) – Reel ohne Hintergrundmusik.');
   const result = { warnings, music: music?.name || null };
 
   if (item.kind === 'video') {
@@ -369,9 +421,25 @@ async function processItem(item, onProgress = () => {}) {
     fs.writeFileSync(assFile, buildAss({
       segments: transcript.segments, ...window, hook: edit.hook ?? item.hook, subtitles: edit.subtitles !== false,
     }));
+    const look = { enhance: edit.enhance !== false, crop: cleanCrop(edit.crop), stabilize: false };
+    if (edit.stabilize !== false && !window.loop && await hasFilter('vidstabdetect')) {
+      onProgress('Wackler werden ausgeglichen …');
+      try {
+        await stabilizeDetect(source, window, workDir);
+        look.stabilize = true;
+      } catch (err) {
+        warnings.push('Stabilisierung übersprungen (Analyse fehlgeschlagen).');
+      }
+    }
     onProgress(`Reel wird geschnitten (${window.length.toFixed(0)} s) …`);
-    await renderVideo({ source, meta, window, music, assFile, workDir, out: tmpOut });
-    Object.assign(result, { transcript, window, sourceDuration: round(meta.duration) });
+    await renderVideo({ source, meta, window, music, assFile, workDir, out: tmpOut, look });
+    const srcThumb = `${item.id}-src.jpg`;
+    await sourcePreview(source, Math.min(window.start + 1, Math.max(0, meta.duration - 0.2)), path.join(config.RENDER_DIR, srcThumb));
+    Object.assign(result, {
+      transcript, window, sourceDuration: round(meta.duration),
+      srcThumb, srcWidth: meta.width, srcHeight: meta.height,
+      look: { enhance: look.enhance, stabilize: look.stabilize, crop: look.crop },
+    });
   } else {
     onProgress('Fotos werden vorbereitet …');
     const photos = [];
@@ -383,7 +451,7 @@ async function processItem(item, onProgress = () => {}) {
     const length = Number(edit.length) || Math.min(config.MAX_SECONDS, Math.max(config.MIN_SECONDS, photos.length * 4));
     fs.writeFileSync(assFile, buildAss({ segments: [], length, hook: edit.hook ?? item.hook, subtitles: false }));
     onProgress(`Foto-Reel wird erstellt (${length} s) …`);
-    await renderPhotos({ photos, music, assFile, workDir, out: tmpOut, length });
+    await renderPhotos({ photos, music, assFile, workDir, out: tmpOut, length, look: { enhance: edit.enhance !== false } });
     Object.assign(result, { transcript: { engine: null, segments: [] }, window: { start: 0, length, loop: false } });
   }
 
@@ -394,4 +462,4 @@ async function processItem(item, onProgress = () => {}) {
   return { ...result, output: path.basename(out), thumb: path.basename(thumb) };
 }
 
-module.exports = { processItem, probe, chooseWindow, buildAss, chunkSegment, listMusic };
+module.exports = { processItem, probe, chooseWindow, buildAss, chunkSegment, listMusic, cleanCrop };

@@ -9,7 +9,7 @@ const config = require('./src/config');
 const store = require('./src/store');
 const jobs = require('./src/jobs');
 const { generateTexts, CATEGORIES } = require('./src/captions');
-const { listMusic } = require('./src/pipeline');
+const { listMusic, cleanCrop } = require('./src/pipeline');
 const { PLATFORMS, PLATFORM_IDS } = require('./src/platforms');
 
 const app = express();
@@ -115,6 +115,7 @@ const publicItem = (item) => item && {
   ...item,
   videoUrl: item.output ? `/media/${item.output}?v=${item.version || 0}` : null,
   thumbUrl: item.thumb ? `/media/${item.thumb}?v=${item.version || 0}` : null,
+  srcThumbUrl: item.srcThumb ? `/media/${item.srcThumb}?v=${item.version || 0}` : null,
 };
 
 app.get('/api/items', requireRole('team'), (req, res) => {
@@ -200,6 +201,9 @@ function sanitizeEdit(e) {
   if (e.length) out.length = Math.min(config.MAX_SECONDS, Math.max(config.MIN_SECONDS, Number(e.length)));
   if ('music' in e) out.music = String(e.music || '');
   if ('subtitles' in e) out.subtitles = Boolean(e.subtitles);
+  if ('enhance' in e) out.enhance = Boolean(e.enhance);
+  if ('stabilize' in e) out.stabilize = Boolean(e.stabilize);
+  if ('crop' in e) out.crop = cleanCrop(e.crop); // null = ganzes Bild
   return out;
 }
 
@@ -243,6 +247,34 @@ app.get('/api/meta', requireRole('team'), (req, res) => {
 });
 
 app.use('/media', requireRole('team'), express.static(config.RENDER_DIR, { maxAge: '1h' }));
+
+// ---------- Hintergrundmusik verwalten (Admin) ----------
+
+const MUSIC_EXT = /\.(mp3|m4a|aac|wav|ogg|flac)$/i;
+const safeMusicName = (n) => path.basename(String(n || '')).replace(/[^\w.\- äöüÄÖÜß()]/g, '_').slice(0, 120);
+const musicUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => { fs.mkdirSync(config.MUSIC_DIR, { recursive: true }); cb(null, config.MUSIC_DIR); },
+    filename: (req, file, cb) => cb(null, safeMusicName(file.originalname)),
+  }),
+  limits: { fileSize: 40 * 1024 * 1024, files: 20 },
+  fileFilter: (req, file, cb) => cb(null, MUSIC_EXT.test(file.originalname)),
+});
+
+app.get('/api/music', requireRole('admin'), (req, res) => {
+  res.json({ tracks: listMusic().map((name) => ({ name, size: fs.statSync(path.join(config.MUSIC_DIR, name)).size })) });
+});
+app.post('/api/music', requireRole('admin'), musicUpload.array('files', 20), (req, res) => {
+  if (!(req.files || []).length) return res.status(400).json({ error: 'Bitte MP3-, M4A-, WAV- oder OGG-Dateien wählen.' });
+  res.status(201).json({ added: req.files.map((f) => f.filename) });
+});
+app.delete('/api/music/:name', requireRole('admin'), (req, res) => {
+  const name = safeMusicName(req.params.name);
+  if (!MUSIC_EXT.test(name)) return res.status(400).json({ error: 'Ungültiger Name.' });
+  fs.rmSync(path.join(config.MUSIC_DIR, name), { force: true });
+  res.json({ ok: true });
+});
+app.use('/music', requireRole('admin'), express.static(config.MUSIC_DIR));
 
 // ---------- Konto-Verknüpfung (OAuth) ----------
 

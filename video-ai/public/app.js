@@ -423,6 +423,16 @@
             </select>
           </label>
           ${isVideo ? `<label class="checkline"><input type="checkbox" name="subtitles" ${item.edit?.subtitles === false ? '' : 'checked'}> Untertitel anzeigen</label>` : ''}
+          <label class="checkline"><input type="checkbox" name="enhance" ${item.edit?.enhance === false ? '' : 'checked'}> Automatisch verschönern (Licht, Farbe, Schärfe)</label>
+          ${isVideo ? `<label class="checkline"><input type="checkbox" name="stabilize" ${item.edit?.stabilize === false ? '' : 'checked'}> Wackler ausgleichen</label>` : ''}
+          ${isVideo && item.srcThumbUrl ? `<div class="stack" style="gap:6px">
+            <label class="checkline"><input type="checkbox" name="cropOn" ${item.look?.crop ? 'checked' : ''}> Nur einen Ausschnitt zeigen (Kisten, Unordnung … wegschneiden)</label>
+            <div class="cropbox" ${item.look?.crop ? '' : 'hidden'}>
+              <img src="${item.srcThumbUrl}" alt="Originalbild" draggable="false">
+              <div class="cropframe"><span class="crophandle" title="Größe ändern"></span></div>
+            </div>
+            <small class="muted" style="margin:0">Rahmen verschieben, an der Ecke unten rechts die Größe ändern. Was im Rahmen ist, füllt das ganze Reel.</small>
+          </div>` : ''}
           ${segs.length ? `<div><b style="font-size:14px">Untertitel korrigieren</b><div class="segments">${segs.map((s) =>
             `<div><span>${fmtSec(s.start - w.start)}</span><input data-seg="${s.start}" value="${esc(s.text)}"></div>`).join('')}</div></div>` : ''}
           <label class="checkline"><input type="checkbox" name="applyEdit"> Video mit diesen Einstellungen neu schneiden</label>
@@ -434,6 +444,56 @@
       const apply = $('[name=applyEdit]', slot);
       if (apply && document.activeElement !== apply && document.activeElement?.closest('details')) apply.checked = true;
     };
+    if (isVideo && item.srcThumbUrl) initCrop(card, item, slot);
+  }
+
+  // Ausschnitt-Werkzeug: ein Rahmen im Hochformat 9:16 über dem Originalbild.
+  // Gespeichert werden Anteile (0–1) des Originalbilds: { x, y, w, h }.
+  function initCrop(card, item, slot) {
+    const box = $('.cropbox', slot);
+    const frame = $('.cropframe', slot);
+    const toggle = $('[name=cropOn]', slot);
+    const sw = item.srcWidth || 16;
+    const sh = item.srcHeight || 9;
+    const ratio = (9 / 16) * (sh / sw); // Breite/Höhe des Rahmens in Bild-Anteilen
+    const fit = (c) => {
+      let h = Math.min(1, Math.max(0.25, c.h));
+      let w = h * ratio;
+      if (w > 1) { w = 1; h = w / ratio; }
+      return { w, h, x: Math.min(1 - w, Math.max(0, c.x)), y: Math.min(1 - h, Math.max(0, c.y)) };
+    };
+    const start = item.look?.crop || { h: 1, x: 0.5 - ratio / 2, y: 0 };
+    card.crop = fit({ ...start, h: start.h || 1 });
+    const draw = () => {
+      Object.assign(frame.style, {
+        left: `${card.crop.x * 100}%`, top: `${card.crop.y * 100}%`,
+        width: `${card.crop.w * 100}%`, height: `${card.crop.h * 100}%`,
+      });
+    };
+    draw();
+    toggle.onchange = () => {
+      box.hidden = !toggle.checked;
+      $('[name=applyEdit]', slot).checked = true;
+    };
+    let drag = null;
+    frame.onpointerdown = (e) => {
+      e.preventDefault();
+      frame.setPointerCapture(e.pointerId);
+      const r = box.getBoundingClientRect();
+      drag = { mode: e.target.classList.contains('crophandle') ? 'size' : 'move', px: e.clientX, py: e.clientY, r, c0: { ...card.crop } };
+    };
+    frame.onpointermove = (e) => {
+      if (!drag) return;
+      const dx = (e.clientX - drag.px) / drag.r.width;
+      const dy = (e.clientY - drag.py) / drag.r.height;
+      card.crop = drag.mode === 'move'
+        ? fit({ ...drag.c0, x: drag.c0.x + dx, y: drag.c0.y + dy })
+        : fit({ ...drag.c0, h: drag.c0.h + Math.max(dy, dx / ratio) });
+      draw();
+      $('[name=applyEdit]', slot).checked = true;
+      card.dirty = true;
+    };
+    frame.onpointerup = () => { drag = null; };
   }
 
   function reviewerName() {
@@ -476,6 +536,9 @@
           const edit = { hook: $('[name=hook]', slot).value, length: $('[name=length]', slot).value, music: $('[name=music]', slot).value };
           if ($('[name=start]', slot)) edit.start = $('[name=start]', slot).value;
           if ($('[name=subtitles]', slot)) edit.subtitles = $('[name=subtitles]', slot).checked;
+          edit.enhance = $('[name=enhance]', slot).checked;
+          if ($('[name=stabilize]', slot)) edit.stabilize = $('[name=stabilize]', slot).checked;
+          if ($('[name=cropOn]', slot)) edit.crop = $('[name=cropOn]', slot).checked ? card.crop : null;
           const edited = $$('[data-seg]', slot);
           if (edited.length) {
             const map = new Map(edited.map((i) => [Number(i.dataset.seg), i.value]));
@@ -536,10 +599,42 @@
       const data = await api('/api/accounts');
       state.meta = await api('/api/meta');
       $('#accountList').innerHTML = data.platforms.map(accountCard).join('');
+      await loadMusic();
     } catch (err) {
       toast(err.message);
     }
   }
+
+  async function loadMusic() {
+    const { tracks } = await api('/api/music');
+    $('#musicList').innerHTML = tracks.length
+      ? tracks.map((t) => `<div class="music-row"><span>🎵 ${esc(t.name)} <small class="muted">${(t.size / 1048576).toFixed(1)} MB</small></span>
+          <audio controls preload="none" src="/music/${encodeURIComponent(t.name)}"></audio>
+          <button class="btn small ghost danger" data-music-del="${esc(t.name)}">Löschen</button></div>`).join('')
+      : '<p class="muted" style="margin:0">Noch keine Musik – Reels sind bis dahin ohne Hintergrundmusik.</p>';
+  }
+
+  $('#musicInput').addEventListener('change', async (e) => {
+    const files = [...e.target.files];
+    e.target.value = '';
+    if (!files.length) return;
+    const fd = new FormData();
+    files.forEach((f) => fd.append('files', f));
+    toast('Musik wird hochgeladen …');
+    const res = await fetch('/api/music', { method: 'POST', body: fd });
+    const data = await res.json().catch(() => ({}));
+    toast(res.ok ? `${data.added.length} Stück(e) hinzugefügt.` : (data.error || 'Hochladen fehlgeschlagen.'));
+    state.meta = await api('/api/meta');
+    loadMusic();
+  });
+
+  $('#musicList').addEventListener('click', async (e) => {
+    const name = e.target.dataset.musicDel;
+    if (!name || !confirm(`„${name}“ löschen?`)) return;
+    await api(`/api/music/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    state.meta = await api('/api/meta');
+    loadMusic();
+  });
 
   function accountCard(p) {
     const acc = p.account;
