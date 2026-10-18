@@ -246,8 +246,8 @@ app.use('/media', requireRole('team'), express.static(config.RENDER_DIR, { maxAg
 
 // ---------- Konto-Verknüpfung (OAuth) ----------
 
-// Facebook und Instagram teilen sich die Meta-Anmeldung → gemeinsame Callback-Adresse.
-const oauthKey = (pid) => (pid === 'facebook' || pid === 'instagram' ? 'meta' : pid);
+// Facebook nutzt den Facebook Login (Callback /auth/meta/…), Instagram den eigenen Instagram-Login.
+const oauthKey = (pid) => (pid === 'facebook' ? 'meta' : pid);
 const redirectUri = (pid) => `${config.PUBLIC_BASE_URL}/auth/${oauthKey(pid)}/callback`;
 const pendingStates = new Map();
 
@@ -292,17 +292,9 @@ app.get('/auth/:key/callback', requireRole('admin'), async (req, res) => {
     if (oauthKey(platform.id) === 'meta') {
       const pages = await platform.exchangeCode(code, redirectUri(platform.id));
       if (!pages.length) return back('Keine Facebook-Seite gefunden – das Konto muss Admin einer Seite sein.');
-      const linked = [];
-      for (const p of [PLATFORMS.facebook, PLATFORMS.instagram]) {
-        const preferred = pages.find((pg) => pg.pageId === store.getAccount(p.id)?.pageId) || pages.find((pg) => p.id === 'facebook' || pg.igId);
-        const account = p.accountFromPage(preferred, pages);
-        if (account) {
-          store.setAccount(p.id, { ...account, allPages: pages });
-          linked.push(p.name);
-        }
-      }
-      const igMissing = !linked.includes('Instagram') ? ' (Kein Instagram-Business-Konto mit der Seite verbunden.)' : '';
-      return back(`${linked.join(' & ')} verknüpft.${igMissing}`, true);
+      const preferred = pages.find((pg) => pg.pageId === store.getAccount('facebook')?.pageId) || pages[0];
+      store.setAccount('facebook', { ...platform.accountFromPage(preferred, pages), allPages: pages });
+      return back(`Facebook verknüpft (Seite ${preferred.pageName}).`, true);
     }
     store.setAccount(platform.id, await platform.handleCallback(code, redirectUri(platform.id)));
     back(`${platform.name} verknüpft.`, true);

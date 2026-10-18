@@ -48,7 +48,7 @@ Frage an die Community), LinkedIn (bodenständig-professionell, Arbeitgeber-Blic
 
 | Plattform | API | Was gepostet wird |
 |---|---|---|
-| Instagram | Instagram Graph API (Content Publishing, resumable Upload) | Reel |
+| Instagram | Instagram API mit Instagram-Login (Content Publishing, resumable Upload) | Reel |
 | Facebook | Graph API `video_reels` | Reel auf der Unternehmensseite |
 | LinkedIn | Videos API + Posts API | Video-Beitrag (Person oder Unternehmensseite) |
 | YouTube | YouTube Data API v3 (resumable Upload) | Short |
@@ -97,14 +97,16 @@ In jeder Entwicklerkonsole eine App anlegen, die **Weiterleitungs-URL** eintrage
 unter „Konten“ angezeigt) und Client-ID/Secret in die `.env` schreiben. Dann in der App auf
 „Verbinden“ klicken.
 
-1. **Instagram + Facebook** (eine Meta-App für beide) – [developers.facebook.com](https://developers.facebook.com/apps)
-   - App-Typ „Business“, Produkte „Facebook Login for Business“ und „Instagram Graph API“
-   - Weiterleitung: `<PUBLIC_BASE_URL>/auth/meta/callback`
-   - Berechtigungen: `pages_show_list, pages_read_engagement, pages_manage_posts,
-     business_management, instagram_basic, instagram_content_publish`
-   - Das Instagram-Konto muss ein **Business-/Creator-Konto** sein und mit der Facebook-Seite verbunden.
-   - Für den Livebetrieb: App-Review bei Meta für diese Berechtigungen (solange die App im
-     Entwicklungsmodus ist, funktioniert sie für App-Admins/Tester – für den Eigenbedarf reicht das oft).
+1. **Facebook + Instagram** (eine Meta-App) – [developers.facebook.com](https://developers.facebook.com/apps)
+   - Anwendungsfälle „Alles auf deiner Seite verwalten“ und „Messaging und Content auf Instagram verwalten“
+   - **Facebook:** Facebook Login for Business → Einstellungen → Redirect-URI `<PUBLIC_BASE_URL>/auth/meta/callback`;
+     Berechtigungen `pages_show_list, pages_read_engagement, pages_manage_posts, business_management`.
+     Zugangsdaten (App-ID/-Geheimcode) am Server: `bash deploy/zugang.sh meta`
+   - **Instagram** (eigener Instagram-Login): im Instagram-Anwendungsfall „API-Einrichtung mit Instagram-Login“
+     das Instagram-Business-Konto hinzufügen, Redirect-URI `<PUBLIC_BASE_URL>/auth/instagram/callback` eintragen;
+     Berechtigungen `instagram_business_basic, instagram_business_content_publish`.
+     Die **Instagram-App-ID/-Geheimcode** (andere als die Meta-App-ID!) am Server: `bash deploy/zugang.sh instagram`
+   - Solange die App im Entwicklungsmodus ist, funktioniert sie für alle mit einer App-Rolle – für den Eigenbedarf reicht das.
 2. **LinkedIn** – [linkedin.com/developers](https://www.linkedin.com/developers/apps)
    - Produkte „Sign In with LinkedIn using OpenID Connect“ und „Share on LinkedIn“
    - Weiterleitung: `<PUBLIC_BASE_URL>/auth/linkedin/callback`
