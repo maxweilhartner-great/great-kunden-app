@@ -196,3 +196,14 @@ code { background: #f1eee4; border-radius: 6px; padding: 2px 6px; font-size: 12p
   background: var(--forest-deep); color: #fff; padding: 12px 18px; border-radius: 12px; box-shadow: var(--shadow);
   max-width: calc(100% - 32px); font-weight: 500;
 }
+
+/* Ausschnitt-Werkzeug */
+.cropbox { position: relative; width: 100%; max-width: 520px; border-radius: 10px; overflow: hidden; background: #000; touch-action: none; user-select: none; }
+.cropbox img { display: block; width: 100%; pointer-events: none; }
+.cropframe { position: absolute; border: 2px solid var(--mango); box-shadow: 0 0 0 9999px rgba(0,0,0,.6); cursor: move; background: transparent; }
+.crophandle { position: absolute; right: -9px; bottom: -9px; width: 22px; height: 22px; border-radius: 50%; background: var(--mango); border: 3px solid #fff; cursor: nwse-resize; }
+
+.music-list { display: flex; flex-direction: column; gap: 8px; }
+.music-row { display: grid; grid-template-columns: 1fr minmax(160px, 260px) auto; gap: 10px; align-items: center; border-top: 1px solid var(--line); padding-top: 8px; font-size: 14px; }
+.music-row audio { width: 100%; height: 32px; }
+@media (max-width: 640px) { .music-row { grid-template-columns: 1fr auto; } .music-row audio { grid-column: 1 / -1; } }

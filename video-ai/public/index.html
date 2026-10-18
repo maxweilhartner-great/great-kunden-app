@@ -91,6 +91,16 @@
       <p class="muted">Nach der Freigabe postet die App über die offiziellen Schnittstellen auf diese Konten.</p>
       <div class="notice" id="accountNotice" hidden></div>
       <div id="accountList" class="accounts"></div>
+
+      <h1 style="margin-top:32px">Hintergrundmusik</h1>
+      <p class="muted">Lizenzfreie Stücke hochladen (z. B. YouTube Audio-Mediathek oder Pixabay Music). Jedes Reel bekommt zufällig eines davon – in der Freigabe lässt sich ein bestimmtes wählen. Spricht jemand im Video, wird die Musik automatisch leiser.</p>
+      <div class="card stack">
+        <label class="btn primary" style="align-self:flex-start;cursor:pointer">
+          ＋ Musik hochladen
+          <input type="file" id="musicInput" accept=".mp3,.m4a,.aac,.wav,.ogg,.flac,audio/*" multiple hidden>
+        </label>
+        <div id="musicList" class="music-list"></div>
+      </div>
     </section>
   </main>
 
