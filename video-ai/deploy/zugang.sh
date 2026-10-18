@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # Plattform-Zugangsdaten am Server eintragen – fragt die Werte ab (Geheimnisse unsichtbar)
 # und startet die App neu. Aufruf als root:
-#   bash /opt/great-video-ai/video-ai/deploy/zugang.sh meta|linkedin|youtube|tiktok
+#   bash /opt/great-video-ai/video-ai/deploy/zugang.sh meta|instagram|linkedin|youtube|tiktok
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 case "${1:-}" in
   meta)     FELDER="META_APP_ID META_APP_SECRET" ;;
+  instagram) FELDER="INSTAGRAM_APP_ID INSTAGRAM_APP_SECRET" ;;
   linkedin) FELDER="LINKEDIN_CLIENT_ID LINKEDIN_CLIENT_SECRET" ;;
   youtube)  FELDER="GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET" ;;
   tiktok)   FELDER="TIKTOK_CLIENT_KEY TIKTOK_CLIENT_SECRET" ;;
-  *) echo "Aufruf: bash deploy/zugang.sh meta|linkedin|youtube|tiktok"; exit 1 ;;
+  *) echo "Aufruf: bash deploy/zugang.sh meta|instagram|linkedin|youtube|tiktok"; exit 1 ;;
 esac
 
 [ -f .env ] || { echo ".env fehlt – zuerst install.sh ausführen."; exit 1; }

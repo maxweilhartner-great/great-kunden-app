@@ -1,4 +1,5 @@
-const { facebook, instagram } = require('./meta');
+const { facebook } = require('./meta');
+const instagram = require('./instagram');
 const linkedin = require('./linkedin');
 const youtube = require('./youtube');
 const tiktok = require('./tiktok');
