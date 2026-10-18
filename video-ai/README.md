@@ -69,16 +69,27 @@ npm start                                        # → http://localhost:3000
 Ohne `TEAM_PASSWORD`/`ADMIN_PASSWORD` läuft die App offen (nur zum lokalen Testen).
 Beim ersten Video lädt Whisper das Modell einmalig aus dem Internet (`small` ≈ 500 MB).
 
-### Mit Docker (empfohlen für den Server)
+### Eigener Server (empfohlen): ein Befehl
 
-```bash
-cd video-ai
-docker build -t great-video-ai .
-docker run -d --name great-video-ai -p 3000:3000 --env-file .env -v great-video-data:/data great-video-ai
-```
+Gedacht für Ubuntu 22.04/24.04, z. B. Hetzner Cloud **CX32** (4 vCPU, 8 GB RAM, ca. 7–8 €/Monat).
 
-Davor einen Reverse-Proxy mit HTTPS (z. B. Caddy oder nginx) – Meta, LinkedIn und TikTok verlangen
-`https`-Weiterleitungsadressen. `PUBLIC_BASE_URL` auf diese Adresse setzen.
+1. **Server anlegen** (Hetzner Cloud → Projekt → Server hinzufügen → Ubuntu 24.04, Standort Nürnberg/Falkenstein).
+2. **Adresse auf den Server zeigen lassen**: beim Domain-Anbieter einen DNS-Eintrag anlegen –
+   Typ `A`, Name `video`, Wert = IP-Adresse des Servers. Ein paar Minuten warten.
+3. **Per SSH auf den Server** (`ssh root@<IP>`) und ausführen:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/maxweilhartner-great/great-kunden-app/main/video-ai/deploy/install.sh | bash -s -- video.great-betriebsverpflegung.com
+   ```
+
+   Das Skript installiert Docker, richtet die Firewall ein, erzeugt Passwörter, baut die App inkl.
+   Whisper und startet sie hinter **Caddy**, das automatisch ein HTTPS-Zertifikat holt.
+   Am Ende werden Team- und Admin-Passwort angezeigt.
+4. **Aktualisieren** nach Änderungen im Repository: denselben Befehl erneut ausführen
+   (Daten, Passwörter und Musik bleiben erhalten).
+
+Konfiguration: `/opt/great-video-ai/video-ai/.env` (danach Skript erneut ausführen).
+Daten liegen im Docker-Volume `video-data` – in Hetzner die automatischen **Backups** des Servers aktivieren.
 
 ## Plattformen einrichten (einmalig)
 
