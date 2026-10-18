@@ -600,6 +600,7 @@
       state.meta = await api('/api/meta');
       $('#accountList').innerHTML = data.platforms.map(accountCard).join('');
       await loadMusic();
+      esShow();
     } catch (err) {
       toast(err.message);
     }
@@ -634,6 +635,109 @@
     await api(`/api/music/${encodeURIComponent(name)}`, { method: 'DELETE' });
     state.meta = await api('/api/meta');
     loadMusic();
+  });
+
+  // Epidemic Sound: ganzen Katalog durchsuchen, vorhören und in die Musikliste übernehmen.
+  const es = { term: '', offset: 0, audio: new Audio(), hls: null, playing: null };
+  const fmtLen = (s) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '');
+
+  function esShow() {
+    $('#esBox').hidden = !(state.role === 'admin' && state.meta?.epidemic);
+  }
+
+  async function esSearch(more = false) {
+    if (!more) { es.offset = 0; $('#esResults').innerHTML = '<p class="muted" style="margin:0">Suche läuft …</p>'; }
+    try {
+      const q = new URLSearchParams({ q: es.term, offset: String(es.offset) });
+      const { tracks, total } = await api(`/api/music/epidemic/search?${q}`);
+      const html = tracks.map((t) => `<div class="es-row">
+          ${t.cover ? `<img src="${esc(t.cover)}" alt="" loading="lazy">` : '<span class="es-cover">🎵</span>'}
+          <span><b>${esc(t.title)}</b>${t.premium ? ' <small class="muted">Premium</small>' : ''}<br>
+            <small class="muted">${esc(t.artists)}${t.seconds ? ` · ${fmtLen(t.seconds)}` : ''}${t.bpm ? ` · ${esc(t.bpm)} BPM` : ''}</small><br>
+            <small class="muted es-tags">${esc([...t.moods, ...t.genres].join(' · '))}</small></span>
+          <button class="btn small ghost" data-es-play="${esc(t.id)}">▶ Vorhören</button>
+          <button class="btn small primary" data-es-import="${esc(t.id)}">Für Reels übernehmen</button>
+        </div>`).join('');
+      if (more) $('#esResults').insertAdjacentHTML('beforeend', html);
+      else $('#esResults').innerHTML = html || '<p class="muted" style="margin:0">Nichts gefunden – anderes Stichwort probieren.</p>';
+      es.offset += tracks.length;
+      $('#esMore').hidden = !tracks.length || (total != null && es.offset >= total);
+    } catch (err) {
+      $('#esResults').innerHTML = `<p class="muted" style="margin:0">${esc(err.message)}</p>`;
+    }
+  }
+
+  function esStop() {
+    es.audio.pause();
+    if (es.hls) { es.hls.destroy(); es.hls = null; }
+    if (es.playing) es.playing.textContent = '▶ Vorhören';
+    es.playing = null;
+  }
+
+  let hlsLoader;
+  function loadHls() {
+    if (window.Hls) return Promise.resolve();
+    hlsLoader ||= new Promise((resolve, reject) => {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js';
+      sc.onload = resolve;
+      sc.onerror = () => { hlsLoader = null; reject(new Error('Abspieler konnte nicht geladen werden.')); };
+      document.head.appendChild(sc);
+    });
+    return hlsLoader;
+  }
+
+  async function esPlay(btn) {
+    if (es.playing === btn) { esStop(); return; }
+    esStop();
+    es.playing = btn;
+    btn.textContent = '… lädt';
+    try {
+      const { url, hls } = await api(`/api/music/epidemic/preview/${encodeURIComponent(btn.dataset.esPlay)}`);
+      if (!url) throw new Error('Keine Hörprobe verfügbar.');
+      if (es.playing !== btn) return;
+      if (hls && !es.audio.canPlayType('application/vnd.apple.mpegurl')) {
+        await loadHls();
+        if (es.playing !== btn) return;
+        es.hls = new window.Hls();
+        es.hls.loadSource(url);
+        es.hls.attachMedia(es.audio);
+      } else {
+        es.audio.src = url;
+      }
+      await es.audio.play();
+      btn.textContent = '■ Stopp';
+    } catch (err) {
+      esStop();
+      toast(err.message);
+    }
+  }
+  es.audio.addEventListener('ended', esStop);
+
+  $('#esForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    es.term = $('#esTerm').value.trim();
+    esSearch();
+  });
+  $('#esMore').addEventListener('click', () => esSearch(true));
+  $('#esResults').addEventListener('click', async (e) => {
+    const play = e.target.closest('[data-es-play]');
+    if (play) { esPlay(play); return; }
+    const imp = e.target.closest('[data-es-import]');
+    if (!imp) return;
+    imp.disabled = true;
+    imp.textContent = 'Wird übernommen …';
+    try {
+      const { added } = await api(`/api/music/epidemic/${encodeURIComponent(imp.dataset.esImport)}/import`, { method: 'POST' });
+      imp.textContent = '✓ Übernommen';
+      toast(`„${added}“ ist jetzt in der Hintergrundmusik.`);
+      state.meta = await api('/api/meta');
+      loadMusic();
+    } catch (err) {
+      imp.disabled = false;
+      imp.textContent = 'Für Reels übernehmen';
+      toast(err.message);
+    }
   });
 
   function accountCard(p) {

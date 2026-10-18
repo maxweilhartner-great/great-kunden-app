@@ -64,5 +64,5 @@ if [ "${NEU:-0}" = 1 ]; then
   echo
   echo "  Bitte notieren! Ändern: nano $DIR/video-ai/.env, danach dieses Skript erneut ausführen."
 fi
-echo "  Plattform-Zugangsdaten (Meta, LinkedIn, Google, TikTok) ebenfalls in $DIR/video-ai/.env eintragen."
-echo "  Musik: lizenzfreie Stücke nach $DIR/video-ai/brand/music/ kopieren (wirkt sofort)."
+echo "  Plattform-Zugangsdaten eintragen: bash $DIR/video-ai/deploy/zugang.sh meta|instagram|linkedin|youtube|tiktok|epidemic"
+echo "  Musik: in der Video-App unter „Konten → Hintergrundmusik“ hochladen oder bei Epidemic Sound suchen."
